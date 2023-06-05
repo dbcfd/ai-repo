@@ -1,0 +1,6 @@
+type FineTunes @createModel(accountRelation: LIST, description: "ai.repo fine tuning metadata") {
+  creator: DID! @accountReference
+  currentVersion: String! @string(minLength: 5, maxLength: 100)
+  description: String! @string(minLength: 3, maxLength: 1000)
+  tags: [String!] @(maxLength: 100)
+}

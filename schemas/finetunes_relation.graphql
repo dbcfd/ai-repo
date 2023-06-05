@@ -1,0 +1,14 @@
+type FineTunes @loadModel(id: "${FINETUNES_ID}") {
+  id: ID!
+}
+
+type Model @loadModel(id: "${MODEL_ID}"){
+  id: ID!
+}
+
+type FineTunesRelation @createModel(accountRelation: LIST, description: "Relate fine tunes to a model") {
+  fineTunesID: StreamID! @documentReference(model: "FineTunes")
+  fineTunes: FineTunes! @relationDocument(property: "fineTunesID")
+  modelID: StreamID! @documentReference(model: "Model")
+  model: Model! @relationDocument(property: "modelID")
+}
