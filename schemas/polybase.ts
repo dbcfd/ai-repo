@@ -24,14 +24,14 @@ collection User {
     if (this.$pk != ctx.publicKey.toHex()) {
       throw error ('invalid owner');
     }
-    this.name = name ?? this.name
+    this.name = name;
   }
   
   setAPIKey(key: string) {
     if (this.$pk != ctx.publicKey.toHex()) {
       throw error ('invalid owner');
     }
-    this.apikey = key ?? this.apikey
+    this.apikey = key;
   }
 }
 
@@ -46,7 +46,7 @@ collection FineTuning {
   
   owner: User;
   
-  @index(description, version)
+  @index(description, version);
   
   constructor(id: string, description: string, tags: string[], version: string, finetunes: string[]) {
     this.id = id;
