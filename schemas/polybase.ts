@@ -18,6 +18,13 @@ collection User {
     this.publicKey = ctx.publicKey;
     this.apikey = apikey;
   }
+
+  setProfile(name: string) {
+    if (this.$pk != ctx.publicKey.toHex()) {
+      throw error ('invalid owner');
+    }
+    this.name = name;
+  }
   
   withApiKey(apikey: string) {
     this.apikey = apikey
@@ -60,7 +67,7 @@ collection FineTuning {
   @delegate
   owner: User;
   
-  @index(description, version)
+  @index(description, version);
   
   constructor(owner: User, id: string, previous?: string, version: Version, description: string, tags: string[], finetunes: string[]) {
     this.owner = owner;
