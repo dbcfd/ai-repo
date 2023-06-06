@@ -1,9 +1,7 @@
+import * as React from 'react'
 import * as eth from '@polybase/eth'
-import { usePolybase } from '@polybase/react'
 import { Polybase } from '@polybase/client'
 import Wallet from 'ethereumjs-wallet'
-
-const USERS_ROUTE = 'pk/0xbf16eba29b3d8eaa4b7c5a07f79dd58c0cd1d3931cb7f3addf632dc3170228f99d62e3407ccbf1d44655170ed2bde6e626b184aea138d1ce481c239673e407bf/user'
 
 export interface Account {
   id: string; 
@@ -13,8 +11,16 @@ export interface Account {
   apikey: string;
 }
 
+export interface WalletContextI {
+  wallet: Wallet | null
+}
+
+export const WalletContext = React.createContext<WalletContextI>({
+  wallet: null
+})
+
 async function getWallet(account: string, db: Polybase) {
-  const col = db.collection<Account>(USERS_ROUTE)
+  const col = db.collection<Account>('User')
   const doc = col.record(account)
   const user = await doc.get().catch(() => null)
   if (!user || !user.data) {
@@ -27,7 +33,7 @@ async function getWallet(account: string, db: Polybase) {
       return { h: 'eth-personal-sign', sig: eth.ethPersonalSign(wallet.getPrivateKey(), data) }
     })
 
-    const API_KEY = '' // get fromn env
+    const API_KEY = '' // later set by user
 
     await col.create([account, encryptedPrivateKey, API_KEY]).catch((e) => {
       console.error(e)
@@ -42,7 +48,9 @@ async function getWallet(account: string, db: Polybase) {
 }
 
 export function useLogin() {
-  const db = usePolybase()
+  const db = new Polybase({
+    defaultNamespace: process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE,
+  })
 
   return async () => {
     const accounts = await eth.requestAccounts()
@@ -53,5 +61,7 @@ export function useLogin() {
     db.signer(async (data: string) => {
       return { h: 'eth-personal-sign', sig: eth.ethPersonalSign(wallet.getPrivateKey(), data) }
     })
+
+    return wallet
   }
 }
