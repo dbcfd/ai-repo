@@ -1,0 +1,7 @@
+type SemVer @createModel(accountRelation: LIST, description: "SemVer representation") {
+  major: Int!
+  minor: Int!
+  patch: Int!
+  preRelease: String (minLength: 1, maxLength: 100)
+  build: String (minLength: 1, maxLength: 100)
+}

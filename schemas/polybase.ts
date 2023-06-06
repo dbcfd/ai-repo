@@ -9,51 +9,68 @@ const schema = `
 collection User {
   id: string; 
   name?: string;
-  pvkey: string;
-  $pk: string;
+  @delegate
+  publicKey: PublicKey;
   apikey: string;
 
-  constructor (id: string, pvkey: string, apikey: string) {
+  constructor(id: string, apikey: string, name?: string) {
     this.id = id;
-    this.$pk = ctx.publicKey.toHex();
-    this.pvkey = pvkey;
+    this.publicKey = ctx.publicKey;
     this.apikey = apikey;
   }
-
-  setProfile(name: string) {
-    if (this.$pk != ctx.publicKey.toHex()) {
-      throw error ('invalid owner');
-    }
-    this.name = name ?? this.name
-  }
   
-  setAPIKey(key: string) {
-    if (this.$pk != ctx.publicKey.toHex()) {
-      throw error ('invalid owner');
+  withApiKey(apikey: string) {
+    this.apikey = apikey
+  }
+}
+
+@public Version {
+  id: string;
+  major: number;
+  minor: number;
+  patch: number;
+  preRelease?: string;
+  build?: string;
+  
+  constructor(major: number, minor: number: patch: number, preRelease?: string, build?: string) {
+    this.id = major + '.' + minor + '.' + patch
+    if(preRelease) {
+      this.id = this.id + '-' + preRelease
     }
-    this.apikey = key ?? this.apikey
+    if(build) {
+      this.id = this.id + '+' + build
+    }
+    this.major = major;
+    this.minor = minor;
+    this.patch = patch;
+    this.preRelease = preRelease;
+    this.build = build;
   }
 }
 
 @public
 collection FineTuning {
   id: string;
-  $pk: string;
-  version: string;
+  previous?: string;
+  version: Version;
   description: string;
   tags: string[];
   finetunes: string[];
   
+  @delegate
   owner: User;
   
   @index(description, version)
   
-  constructor(id: string, description: string, tags: string[], version: string, finetunes: string[]) {
+  constructor(owner: User, id: string, previous?: string, version: Version, description: string, tags: string[], finetunes: string[]) {
+    this.owner = owner;
     this.id = id;
-    this.$pk = ctx.publicKey.toHex();
+    this.previous = previous;
     this.version = version;
+    this.description = description;
+    this.tags = tags;
     this.finetunes = finetunes;
-  } 
+  }
 }
 
 @public
@@ -61,20 +78,23 @@ collection Model {
   id: string;
   name: string;
   basemodel: string;
-  version: string;
-  $pk: string;
+  previous?: Model;
+  version: Version;
   
-  finetunes: FineTunes[];
+  finetunes: FineTuning[];
+  @delegate
+  owner: User
   
-  @index(name, version);
+  @index(owner, name, version);
+  @index(owner, basemodel);
 
-  constructor (id: string, name: string, basemodel: string, version: string, finetunes: FineTunes[]) {
+  constructor (owner: User, id: string, name: string, basemodel: string, previous?: Model, version: Version, finetunes: FineTuning[]) {
     this.id = id;
-    this.$pk = ctx.publicKey.toHex();
-    this.account = account;
+    this.name = name;
     this.basemodel = basemodel;
-    this.message = message;
-    this.timestamp = timestamp;
+    this.previous = previous;
+    this.version = version;
+    this.finetues = finetunes;
   }
 }
 `
