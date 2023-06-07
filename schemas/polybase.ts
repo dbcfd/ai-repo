@@ -1,37 +1,11 @@
-import { Polybase } from '@polybase/client'
-import Wallet from 'ethereumjs-wallet'
-import { ethPersonalSign } from '@polybase/eth'
-
-// PK, need to establish a PK so we can control updates
+const { Polybase } = require('@polybase/client')
+const Wallet = require('ethereumjs-wallet').default
+const { ethPersonalSign } = require('@polybase/eth')
+require('dotenv').config()
 
 const schema = `
-@public
-collection User {
-  id: string; 
-  name?: string;
-  @delegate
-  publicKey: PublicKey;
-  apikey: string;
-
-  constructor(id: string, apikey: string, name?: string) {
-    this.id = id;
-    this.publicKey = ctx.publicKey;
-    this.apikey = apikey;
-  }
-
-  setProfile(name: string) {
-    if (this.$pk != ctx.publicKey.toHex()) {
-      throw error ('invalid owner');
-    }
-    this.name = name;
-  }
-  
-  withApiKey(apikey: string) {
-    this.apikey = apikey
-  }
-}
-
-@public Version {
+@public 
+collection Version {
   id: string;
   major: number;
   minor: number;
@@ -39,19 +13,47 @@ collection User {
   preRelease?: string;
   build?: string;
   
-  constructor(major: number, minor: number: patch: number, preRelease?: string, build?: string) {
-    this.id = major + '.' + minor + '.' + patch
-    if(preRelease) {
-      this.id = this.id + '-' + preRelease
+  constructor(major: number, minor: number, patch: number, preRelease?: string, build?: string) {
+    this.id = major + '.' + minor + '.' + patch;
+    if (preRelease) {
+      this.id = this.id + '-' + preRelease;
     }
-    if(build) {
-      this.id = this.id + '+' + build
+    if (build) {
+      this.id = this.id + '+' + build;
     }
     this.major = major;
     this.minor = minor;
     this.patch = patch;
     this.preRelease = preRelease;
     this.build = build;
+  }
+}
+
+@public
+collection User {
+  id: string; 
+  name?: string;
+  @delegate
+  publicKey: PublicKey;
+  pvkey: string;
+  apikey: string;
+
+  constructor(id: string, pvkey: string, apikey: string) {
+    this.id = id;
+    this.publicKey = ctx.publicKey;
+    this.apikey = apikey;
+    this.pvkey = pvkey;
+  }
+
+  setProfile(name: string) {
+    if (this.publicKey != ctx.publicKey.toHex()) {
+      throw error ('invalid owner');
+    }
+    this.name = name;
+  }
+    
+  withApiKey(apikey: string) {
+    this.apikey = apikey;
   }
 }
 
@@ -87,10 +89,10 @@ collection Model {
   basemodel: string;
   previous?: Model;
   version: Version;
-  
+
   finetunes: FineTuning[];
   @delegate
-  owner: User
+  owner: User;
   
   @index(owner, name, version);
   @index(owner, basemodel);
@@ -104,28 +106,33 @@ collection Model {
     this.finetues = finetunes;
   }
 }
-`
+`;
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY ?? ''
+async function load(privateKey: string, polybaseNamespace: string) {
+  if (!privateKey) {
+    throw new Error('No private key provided')
+  }
+  if (!polybaseNamespace) {
+    throw new Error('Missing Polybase namespace')
+  }
+  
+  const db = new Polybase({
+    defaultNamespace: polybaseNamespace,
+    signer: async (data: any) => {
+      const wallet = Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
+      return { h: 'eth-personal-sign', sig: ethPersonalSign(wallet.getPrivateKey(), data) }
+    },
+  })
 
-async function load() {
-    const db = new Polybase({
-        baseURL: `${process.env.REACT_APP_API_URL}/v0`,
-        signer: async (data) => {
-            const wallet = Wallet.fromPrivateKey(Buffer.from(PRIVATE_KEY, 'hex'))
-            return { h: 'eth-personal-sign', sig: ethPersonalSign(wallet.getPrivateKey(), data) }
-        },
-    })
+  await db.applySchema(schema, 'ai.repo')
 
-    if (!PRIVATE_KEY) {
-        throw new Error('No private key provided')
-    }
-
-    await db.applySchema(schema, 'ai.repo')
-
-    return 'Schema loaded'
+  return 'Schema loaded'
 }
 
-load()
-    .then(console.log)
-    .catch(console.error)
+const PRIVATE_KEY = process.env.PRIVATE_KEY ?? ''
+const POLYBASE_NAMESPACE = process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE ?? ''
+
+load(PRIVATE_KEY, POLYBASE_NAMESPACE)
+  .then(console.log)
+  .catch(console.error)
+

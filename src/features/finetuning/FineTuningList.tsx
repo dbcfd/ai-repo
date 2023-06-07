@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Box, Heading, Container, VStack, Stack, Input, HStack, Button, Spacer, Link as ChakraLink } from '@chakra-ui/react'
 import { nanoid } from 'nanoid'
 import {useAuth, useCollection, useDocument, usePolybase} from '@polybase/react'
-import { Collection, FineTuning } from "@/features/types";
+import { Collections, FineTuning } from "@/features/types";
 import {useParams} from "next/navigation";
 
 export function ProfileDetail() {
@@ -13,7 +13,7 @@ export function ProfileDetail() {
     const { auth } = useAuth()
 
     const { data: finetunings } = useCollection<FineTuning>(
-        account ? polybase.collection(Collection.FineTuning)
+        account ? polybase.collection(Collections.FineTuning)
             .where('owner', '==', account)
             .sort('version.major', 'desc')
             : null,

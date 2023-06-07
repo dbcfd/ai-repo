@@ -7,7 +7,6 @@ export interface Account {
   id: string; 
   name?: string;
   pvkey: string;
-  $pk: string;
   apikey: string;
 }
 
@@ -27,6 +26,7 @@ async function getWallet(account: string, db: Polybase) {
     const wallet = Wallet.generate()
     const privateKeyBuff = wallet.getPrivateKey()
     const privateKey = privateKeyBuff.toString('hex')
+
     const encryptedPrivateKey = await eth.encrypt(privateKey, account)
 
     db.signer(async (data: string) => {
@@ -35,7 +35,7 @@ async function getWallet(account: string, db: Polybase) {
 
     const API_KEY = '' // later set by user
 
-    await col.create([account, encryptedPrivateKey, API_KEY]).catch((e) => {
+    await col.create([account, encryptedPrivateKey, API_KEY, '']).catch((e) => {
       console.error(e)
       throw e
     })
