@@ -1,0 +1,7 @@
+type FineTuningRelation @loadModel(id: "kjzl6hvfrbw6c9og6cfst76owh1dcxrk4msor2fyb5vxm66vaw0qiprrxthf7x5") {
+  id: ID!
+}
+
+type AIModel @loadModel(id: "kjzl6hvfrbw6c656rfji57c0ljkn9o56zsfy3uhne0klps73l5j7qr9sw0fum9q") {
+  fineTunings: [FineTuningRelation] @relationFrom(model: "FineTuningRelation", property: "aiModelID")
+}

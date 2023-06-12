@@ -1,0 +1,7 @@
+type FineTuningRelation @loadModel(id: ${FINETUNING_RELATION_ID}) {
+  id: ID!
+}
+
+type AIModel @loadModel(id: ${AIMODEL_ID}) {
+  fineTunings: [FineTuningRelation] @relationFrom(model: "FineTuningRelation", property: "aiModelID")
+}
