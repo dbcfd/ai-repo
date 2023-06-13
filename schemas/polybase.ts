@@ -1,104 +1,135 @@
-import { Polybase } from '@polybase/client'
-import Wallet from 'ethereumjs-wallet'
-import { ethPersonalSign } from '@polybase/eth'
+import {DATABASE} from "@/features/types";
 
-// PK, need to establish a PK so we can control updates
+const { Polybase } = require('@polybase/client')
+const Wallet = require('ethereumjs-wallet').default
+const { ethPersonalSign } = require('@polybase/eth')
+require('dotenv').config()
 
 const schema = `
+@public 
+collection Version {
+  id: string;
+  major: number;
+  minor: number;
+  patch: number;
+  preRelease?: string;
+  build?: string;
+  
+  constructor(major: number, minor: number, patch: number, preRelease?: string, build?: string) {
+    this.id = major + '.' + minor + '.' + patch;
+    if (preRelease) {
+      this.id = this.id + '-' + preRelease;
+    }
+    if (build) {
+      this.id = this.id + '+' + build;
+    }
+    this.major = major;
+    this.minor = minor;
+    this.patch = patch;
+    this.preRelease = preRelease;
+    this.build = build;
+  }
+}
+
 @public
 collection User {
   id: string; 
   name?: string;
-  pvkey: string;
-  $pk: string;
-  apikey: string;
+  @delegate
+  publicKey: PublicKey;
+  privateKey: string;
+  apiKey: string;
 
-  constructor (id: string, pvkey: string, apikey: string) {
+  constructor(id: string, privateKey: string, apikey: string, name?: string) {
     this.id = id;
-    this.$pk = ctx.publicKey.toHex();
-    this.pvkey = pvkey;
-    this.apikey = apikey;
+    this.publicKey = ctx.publicKey;
+    this.apiKey = apiKey;
   }
 
   setProfile(name: string) {
-    if (this.$pk != ctx.publicKey.toHex()) {
+    if (this.publicKey != ctx.publicKey.toHex()) {
       throw error ('invalid owner');
     }
     this.name = name;
-  }
-  
-  setAPIKey(key: string) {
-    if (this.$pk != ctx.publicKey.toHex()) {
-      throw error ('invalid owner');
-    }
-    this.apikey = key;
   }
 }
 
 @public
 collection FineTuning {
   id: string;
-  $pk: string;
-  version: string;
+  previous?: string;
+  version: Version;
   description: string;
   tags: string[];
-  finetunes: string[];
+  fineTunes: string[];
   
+  @delegate
   owner: User;
   
   @index(description, version);
   
-  constructor(id: string, description: string, tags: string[], version: string, finetunes: string[]) {
+  constructor(owner: User, id: string, previous?: string, version: Version, description: string, tags: string[], fineTunes: string[]) {
+    this.owner = owner;
     this.id = id;
-    this.$pk = ctx.publicKey.toHex();
+    this.previous = previous;
     this.version = version;
-    this.finetunes = finetunes;
-  } 
+    this.description = description;
+    this.tags = tags;
+    this.fineTunes = fineTunes;
+  }
 }
 
 @public
 collection Model {
   id: string;
   name: string;
-  basemodel: string;
-  version: string;
-  $pk: string;
-  
-  finetunes: FineTunes[];
-  
-  @index(name, version);
+  baseModel: string;
+  previous?: Model;
+  version: Version;
 
-  constructor (id: string, name: string, basemodel: string, version: string, finetunes: FineTunes[]) {
+  finetunes: FineTuning[];
+  @delegate
+  owner: User;
+  
+  @index(owner, name, version);
+  @index(owner, basemodel);
+
+  constructor (owner: User, id: string, name: string, basemodel: string, previous?: Model, version: Version, finetunes: FineTuning[]) {
     this.id = id;
-    this.$pk = ctx.publicKey.toHex();
-    this.account = account;
+    this.name = name;
     this.basemodel = basemodel;
-    this.message = message;
-    this.timestamp = timestamp;
+    this.previous = previous;
+    this.version = version;
+    this.finetues = finetunes;
   }
 }
-`
+`;
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY ?? ''
+async function load(privateKey: string, polybaseNamespace: string) {
+  if (!privateKey) {
+    throw new Error('No private key provided')
+  }
+  if (!polybaseNamespace) {
+    throw new Error('Missing Polybase namespace')
+  }
+  
+  const db = new Polybase({
+    defaultNamespace: polybaseNamespace,
+    signer: async (data: any) => {
+      const wallet = Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
+      return { h: 'eth-personal-sign', sig: ethPersonalSign(wallet.getPrivateKey(), data) }
+    },
+  })
 
-async function load() {
-    const db = new Polybase({
-        baseURL: `${process.env.REACT_APP_API_URL}/v0`,
-        signer: async (data) => {
-            const wallet = Wallet.fromPrivateKey(Buffer.from(PRIVATE_KEY, 'hex'))
-            return { h: 'eth-personal-sign', sig: ethPersonalSign(wallet.getPrivateKey(), data) }
-        },
-    })
+  await db.applySchema(schema, DATABASE)
 
-    if (!PRIVATE_KEY) {
-        throw new Error('No private key provided')
-    }
-
-    await db.applySchema(schema, 'ai.repo')
-
-    return 'Schema loaded'
+  return 'Schema loaded'
 }
 
-load()
-    .then(console.log)
-    .catch(console.error)
+const PRIVATE_KEY = process.env.PRIVATE_KEY ?? ''
+const POLYBASE_NAMESPACE = process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE ?? ''
+
+load(PRIVATE_KEY, POLYBASE_NAMESPACE)
+  .then(console.log)
+  .catch(console.error)
+

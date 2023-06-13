@@ -1,0 +1,14 @@
+type FineTuning @loadModel(id: ${FINETUNING_ID}) {
+  id: ID!
+}
+
+type AIModel @loadModel(id: ${AIMODEL_ID}){
+  id: ID!
+}
+
+type FineTuningRelation @createModel(accountRelation: LIST, description: "Relate fine tuning to an ai model") {
+  fineTuningID: StreamID! @documentReference(model: "FineTuning")
+  fineTuning: FineTuning! @relationDocument(property: "fineTuningID")
+  aiModelID: StreamID! @documentReference(model: "AIModel")
+  aiModel: AIModel! @relationDocument(property: "aiModelID")
+}
