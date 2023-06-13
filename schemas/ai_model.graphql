@@ -15,6 +15,7 @@ type SemVer {
 
 type AIModel @createModel(accountRelation: LIST, description: "ai.repo trained model") {
   version: SemVer!
+  commitLog: ID!
   name: String! @string(minLength: 3, maxLength: 100)
   baseModel: BaseModel!
   createdModel: String! @string(minLength: 3, maxLength: 100)
