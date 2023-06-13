@@ -11,6 +11,29 @@ Features
 
 ## Getting Started
 
+### Setup Ceramic
+Follow the instructions for setting up [wheel](https://github.com/ceramicstudio/wheel). When running wheel, choose to 
+install ceramic and composedb. Wheel will setup into a project directory, that we will call <wheel directory>
+
+### Generate Models
+Run `create_models.sh` to generate models
+
+    ./create_models.sh <wheel_directory>
+
+### Run Graphiql Server (Optional)
+
+To run a graphiql server for query exploration, you will need to add to you environment the appropriate ceramic variables
+
+    cd <wheel directory>
+    source composedb.env
+
+Now you can run the graphiql server
+
+    cd <wheel directory>
+
+
+### Run Server
+
 First, run the development server:
 
 ```bash
