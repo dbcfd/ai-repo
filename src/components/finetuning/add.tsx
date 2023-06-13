@@ -1,12 +1,14 @@
 import {useContext} from "react";
 import {ComposeDBContext} from "@/features/composedb";
-import { gql, useQuery } from '@apollo/client';
+import {gql, useMutation} from '@apollo/client';
 import * as semver from 'semver'
 
 const CREATE_FINE_TUNING = gql`
     mutation CreateFineTuning($i: CreateFineTuningInput!){
         createFineTuning(input: $i){
-            clientMutationId
+            document {
+                id
+            }
         }
     }
 `
@@ -29,7 +31,7 @@ const CREATE_FINE_TUNING = gql`
 export default function GetFineTunings({state}) {
     const composeDB = useContext(ComposeDBContext)
 
-    const [addFineTuning, { data, loading, error }] = useQuery(CREATE_FINE_TUNING);
+    const [addFineTuning, { data, loading, error }] = useMutation(CREATE_FINE_TUNING);
 
     if (loading) return 'Submitting...';
 
@@ -53,7 +55,7 @@ export default function GetFineTunings({state}) {
 
         addFineTuning(input)
 
-        const id = data.clientMutationId
+        const id = data.document.id
     }
 
     return (
