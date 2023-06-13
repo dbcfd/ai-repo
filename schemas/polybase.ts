@@ -1,11 +1,4 @@
-import {DATABASE} from "@/features/types";
-
-const { Polybase } = require('@polybase/client')
-const Wallet = require('ethereumjs-wallet').default
-const { ethPersonalSign } = require('@polybase/eth')
-require('dotenv').config()
-
-const schema = `
+export const schema = `
 @public 
 collection Version {
   id: string;
@@ -55,81 +48,44 @@ collection User {
 }
 
 @public
-collection FineTuning {
+collection FineTuningCommits {
   id: string;
-  previous?: string;
+  commitLog: string;
   version: Version;
-  description: string;
-  tags: string[];
-  fineTunes: string[];
   
   @delegate
   owner: User;
   
-  @index(description, version);
+  @index(commitLog, version);
   
-  constructor(owner: User, id: string, previous?: string, version: Version, description: string, tags: string[], fineTunes: string[]) {
+  constructor(owner: User, id: string, commitLog: string, version: Version) {
     this.owner = owner;
     this.id = id;
-    this.previous = previous;
+    this.commitLog = commitLog;
     this.version = version;
-    this.description = description;
-    this.tags = tags;
-    this.fineTunes = fineTunes;
   }
 }
 
 @public
-collection Model {
+collection AIModelCommits {
   id: string;
-  name: string;
-  baseModel: string;
-  previous?: Model;
+  commitLog: string;
   version: Version;
+  
+  fineTuning: FineTuningCommits[];
 
-  finetunes: FineTuning[];
   @delegate
   owner: User;
   
-  @index(owner, name, version);
-  @index(owner, basemodel);
+  @index(owner, commitLog, version);
 
-  constructor (owner: User, id: string, name: string, basemodel: string, previous?: Model, version: Version, finetunes: FineTuning[]) {
+  constructor (owner: User, id: string, commitLog: string, version: Version, fineTuning: FineTuningCommits[]) {
     this.id = id;
     this.name = name;
-    this.basemodel = basemodel;
-    this.previous = previous;
+    this.commitLog = commitLog;
     this.version = version;
-    this.finetues = finetunes;
+    this.fineTuning = fineTuning;
   }
 }
 `;
-
-async function load(privateKey: string, polybaseNamespace: string) {
-  if (!privateKey) {
-    throw new Error('No private key provided')
-  }
-  if (!polybaseNamespace) {
-    throw new Error('Missing Polybase namespace')
-  }
-  
-  const db = new Polybase({
-    defaultNamespace: polybaseNamespace,
-    signer: async (data: any) => {
-      const wallet = Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
-      return { h: 'eth-personal-sign', sig: ethPersonalSign(wallet.getPrivateKey(), data) }
-    },
-  })
-
-  await db.applySchema(schema, DATABASE)
-
-  return 'Schema loaded'
-}
-
-const PRIVATE_KEY = process.env.PRIVATE_KEY ?? ''
-const POLYBASE_NAMESPACE = process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE ?? ''
-
-load(PRIVATE_KEY, POLYBASE_NAMESPACE)
-  .then(console.log)
-  .catch(console.error)
 
