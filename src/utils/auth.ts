@@ -25,9 +25,6 @@ async function getWallet(account: string, db: Polybase) {
   const user = await doc.get().catch(() => null)
   if (!user || !user.data) {
     const wallet = Wallet.generate()
-    const privateKeyBuff = wallet.getPrivateKey()
-    const privateKey = privateKeyBuff.toString('hex')
-    const encryptedPrivateKey = await eth.encrypt(privateKey, account)
 
     db.signer(async (data: string) => {
       return { h: 'eth-personal-sign', sig: eth.ethPersonalSign(wallet.getPrivateKey(), data) }
@@ -35,13 +32,14 @@ async function getWallet(account: string, db: Polybase) {
 
     const API_KEY = '' // later set by user
 
-    await col.create([account, encryptedPrivateKey, API_KEY]).catch((e) => {
+    await col.create([account, API_KEY]).catch((e) => {
       console.error(e)
       throw e
     })
 
     return wallet
   } else {
+    // TODO: this needs to be changed since we're not storing the private key
     const privateKey = await eth.decrypt(user.data.pvkey, account)
     return Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
   }
