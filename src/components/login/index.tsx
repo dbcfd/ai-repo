@@ -22,7 +22,11 @@ export function Login({
   const login = useLogin()
   const db = usePolybase()
 
-  const windowWidth = window ? window.innerWidth : 1000
+  let windowWidth = 1000
+
+  if (window) {
+    windowWidth = window.innerWidth
+  }
 
   const sidePanelProps = useSpring({
     config: {
