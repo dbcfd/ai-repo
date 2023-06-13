@@ -22,11 +22,13 @@ export function Login({
   const login = useLogin()
   const db = usePolybase()
 
-  let windowWidth = 1000
 
-  if (window) {
-    windowWidth = window.innerWidth
-  }
+  const [windowWidth, setWindowWidth] = React.useState(1000);
+  React.useEffect(() => {
+    if (window) {
+      setWindowWidth(window.innerWidth)
+    }
+  });
 
   const sidePanelProps = useSpring({
     config: {

@@ -35,10 +35,9 @@ collection User {
   name?: string;
   @delegate
   publicKey: PublicKey;
-  privateKey: string;
   apiKey: string;
 
-  constructor(id: string, apikey: string, name?: string) {
+  constructor(id: string, apiKey: string, name?: string) {
     this.id = id;
     this.publicKey = ctx.publicKey;
     this.apiKey = apiKey;

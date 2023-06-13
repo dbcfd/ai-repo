@@ -6,9 +6,8 @@ import Wallet from 'ethereumjs-wallet'
 export interface Account {
   id: string; 
   name?: string;
-  pvkey: string;
-  $pk: string;
-  apikey: string;
+  publicKey: string;
+  apiKey: string;
 }
 
 export interface WalletContextI {
@@ -30,9 +29,9 @@ async function getWallet(account: string, db: Polybase) {
       return { h: 'eth-personal-sign', sig: eth.ethPersonalSign(wallet.getPrivateKey(), data) }
     })
 
-    const API_KEY = '' // later set by user
-
-    await col.create([account, API_KEY]).catch((e) => {
+    //apiKey and name set later by the user
+    const apiKey = '';
+    await col.create([account, apiKey]).catch((e) => {
       console.error(e)
       throw e
     })
