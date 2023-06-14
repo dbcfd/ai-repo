@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e 
 
-OUT_DIR=generated
 CURRENT_DIR=$(pwd)
 OUT_DIR=$CURRENT_DIR/generated
 COMPOSEDB_CMD="sh composedb"
