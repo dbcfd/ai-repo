@@ -6,8 +6,8 @@ import { useSpring, animated } from 'react-spring'
 import { usePolybase } from '@polybase/react'
 import { XCircleIcon } from '@heroicons/react/24/solid'
 
-import { Account, WalletContext, truncateString } from '@/utils'
-import { useLogin, useAuth } from '@/features/auth'
+import { Account, truncateString } from '@/utils'
+import { AuthContext, getEthereumAddress } from '@/features/auth'
 
 interface LoginProps {
 }
@@ -17,17 +17,32 @@ export function Login({
 ) {
   const [isPanelOpen, setPanelOpen] = React.useState(false)
   const [sidePanel, setSidePanel] = React.useState<HTMLElement | null>(null)
-  const { wallet } = React.useContext(WalletContext)
-  const login = useLogin()
+  const { loading, auth, login, logout } = React.useContext(AuthContext)
   const db = usePolybase()
 
 
   const [windowWidth, setWindowWidth] = React.useState(1000);
+  const [ethAddr, setEthAddr] = React.useState<string | null>(null);
+
+  const getAddr = React.useEffect(() => {
+    async function getAddress() {
+      if (auth?.signer) {
+        const addr = await getEthereumAddress(auth)
+        if (addr) {
+          setEthAddr(truncateString(addr, 6))
+        } else {
+          setEthAddr(null)
+        }
+      }
+    }
+    getAddress()
+  }, [auth?.signer]);
+
   React.useEffect(() => {
     if (window) {
       setWindowWidth(window.innerWidth)
     }
-  });
+  }, []);
 
   const sidePanelProps = useSpring({
     config: {
@@ -39,7 +54,7 @@ export function Login({
   })
 
   async function onClick() {
-    const _wallet = await useLogin()
+    await login()
   }
 
   async function submitKey(event: React.FormEvent<HTMLFormElement>) {
@@ -49,7 +64,7 @@ export function Login({
     const { openApiKey } = Object.fromEntries(formData) as any
 
     const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}/User`)
-    const doc = col.record(wallet?.getPublicKeyString()!)
+    const doc = col.record(await auth?.signer.getAddress()!)
     const user = await doc.get().catch(() => null)
 
     if (user) {
@@ -61,11 +76,12 @@ export function Login({
     }
   }
 
-  if (wallet) {
+  if (ethAddr) {
+
     return (
       <>
         <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={() => setPanelOpen(true)}>
-          {truncateString(wallet.getPublicKeyString(), 6)}
+          {ethAddr}
         </button>
         <animated.div
           ref={setSidePanel}
@@ -76,7 +92,7 @@ export function Login({
               <div>
                 <div className='flex justify-between items-center'>
                   <h3 className='text-lg text-ellipsis overflow-hidden font-bold'>
-                    {truncateString(wallet.getPublicKeyString(), 6)}
+                    {ethAddr}
                   </h3>
                   <button className='flex items-center justify-center text-xs uppercase h-[26px]' onClick={() => setPanelOpen(false)}>
                     <XCircleIcon height={24} />

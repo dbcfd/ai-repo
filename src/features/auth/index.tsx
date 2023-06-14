@@ -12,13 +12,32 @@ import { Account } from '@/utils'
 
 type AuthenticatedSession = {
     signer: JsonRpcSigner
+    provider: any
+    eth: any
     didSession: DIDSession
     ceramic: CeramicClient
     composedb: ComposeClient
     db: Polybase
 }
 
-type LoginFn = (sess: AuthenticatedSession) => Promise<void>
+export function isLoggedIn(auth: AuthenticatedSession | null): boolean {
+    if (auth?.didSession && auth.signer) {
+        return true
+    } else {
+        return false
+    }
+}
+
+export async function getEthereumAddress(auth: AuthenticatedSession | null): Promise<string | null> {
+    if (auth?.signer) {
+        const addr = await auth.signer.getAddress()
+        return addr
+    } else {
+        return null
+    }
+}
+
+type LoginFn = () => Promise<AuthenticatedSession | null>
 type LogoutFn = () => Promise<void>
 
 type AuthenticationMemo = {
@@ -39,7 +58,7 @@ const CERAMIC_AUTH = 'ceramic:auth'
 //     });
 // }
 
-async function authenticateSession(func: LoginFn): Promise<void> {
+async function authenticateSession(): Promise<AuthenticatedSession | null> {
     const url = process.env.NEXT_PUBLIC_CERAMIC_URL
     if (!url) {
         throw Error('Missing ceramic URL configuration')
@@ -63,8 +82,6 @@ async function authenticateSession(func: LoginFn): Promise<void> {
         throw new Error('Install metamask')
     }
 
-    console.log('eth ', ethereum)
-
     const provider = new ethers.BrowserProvider(ethereum)
     if (!provider) {
         throw new Error('Missing ethereum provider')
@@ -85,7 +102,7 @@ async function authenticateSession(func: LoginFn): Promise<void> {
     }
     const didSession = await DIDSession.authorize(authMethod, { resources: composedb.resources })
     if (!didSession) {
-        throw new Error('Missing authMethod')
+        throw new Error('Missing didSession')
     }
     localStorage.setItem(CERAMIC_AUTH, didSession.serialize());
 
@@ -106,27 +123,31 @@ async function authenticateSession(func: LoginFn): Promise<void> {
     const auth = {
         ceramic,
         composedb,
+        eth: ethereum,
+        provider,
         db,
         didSession,
         signer
     }
-    func(auth)
+    return auth
 }
 
 export const AuthContext = createContext<AuthenticationMemo>({
     loading: true,
     auth: null,
-    login: async () => { },
+    login: async () => null,
     logout: async () => { },
 })
 
-export default function Auth({ children }) {
+export function AuthProvider({ children }) {
     const [auth, setAuth] = useState<AuthenticationMemo['auth']>(null)
     const [loading, setLoading] = useState(true)
 
-    const login = useCallback(async (completedAuth: AuthenticatedSession) => {
+    const login = useCallback(async () => {
+        const completedAuth = await authenticateSession()
         setAuth(completedAuth)
     }, [])
+
 
     const logout = useCallback(async () => {
         setAuth(null)
@@ -152,20 +173,3 @@ export default function Auth({ children }) {
     )
 }
 
-export function useAuth() {
-    const authContext = useContext(AuthContext)
-    if (!authContext)
-        throw new Error('useAuth must be called within a AuthContext.Provider tag');
-    return useContext(AuthContext);
-}
-
-export function useIsLoggedIn() {
-    const { auth, loading } = useAuth()
-    return [!!auth, loading]
-}
-
-export function useLogin() {
-    const { login } = useAuth()
-
-    return authenticateSession(login)
-}
