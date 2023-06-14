@@ -63,15 +63,18 @@ export function Login({
     const formData = new FormData(event.target as HTMLFormElement)
     const { openApiKey } = Object.fromEntries(formData) as any
 
-    const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}/User`)
-    const doc = col.record(await auth?.signer.getAddress()!)
-    const user = await doc.get().catch(() => null)
+    if (ethAddr) {
+      const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}/User`)
+      const doc = col.record(ethAddr)
+      const user = await doc.get().catch(() => null)
 
-    if (user) {
-      const res = await user.call('setAPIKey', [openApiKey])
 
-      if (res) {
-        // TODO: success popper
+      if (user) {
+        const res = await user.call('setAPIKey', [openApiKey])
+
+        if (res) {
+          // TODO: success popper
+        }
       }
     }
   }

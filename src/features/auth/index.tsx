@@ -49,14 +49,6 @@ type AuthenticationMemo = {
 
 const CERAMIC_AUTH = 'ceramic:auth'
 
-// async function getAccountId(ethProvider: any, address: any) {
-//     const ethChainId = await ethProvider.send('eth_chainId', []);
-//     const chainId = `eip155:${ethChainId}`;
-//     return new AccountId({
-//         address,
-//         chainId
-//     });
-// }
 
 async function authenticateSession(): Promise<AuthenticatedSession | null> {
     const url = process.env.NEXT_PUBLIC_CERAMIC_URL
