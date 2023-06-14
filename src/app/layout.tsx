@@ -9,6 +9,7 @@ import Wallet from 'ethereumjs-wallet'
 import { WalletContext } from '@/utils'
 
 import './globals.css'
+import { AuthContext } from '@/features/auth'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,10 +18,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
   }) {
-  const [wallet, setWallet] = React.useState(null as Wallet | null)
   return (
     <html lang="en">
-      <WalletContext.Provider value={{ wallet }}>
+      <AuthContext.Provider value={{}} >
         <body className={inter.className}>
           <nav className="flex justify-between items-center w-full">
             <div className='flex items-center'>
@@ -34,11 +34,11 @@ export default function RootLayout({
                 <p className='uppercase text-md mr-4'>model</p>
               </Link>
             </div>
-            <Login setWallet={setWallet} />
+            <Login />
           </nav>
           {children}
         </body>
-      </WalletContext.Provider>
+      </AuthContext.Provider>
     </html>
   )
 }

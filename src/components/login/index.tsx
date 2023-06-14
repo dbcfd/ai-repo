@@ -6,14 +6,13 @@ import { useSpring, animated } from 'react-spring'
 import { usePolybase } from '@polybase/react'
 import { XCircleIcon } from '@heroicons/react/24/solid'
 
-import { Account, WalletContext, truncateString, useLogin } from '@/utils'
+import { Account, WalletContext, truncateString } from '@/utils'
+import { useLogin, useAuth } from '@/features/auth'
 
 interface LoginProps {
-  setWallet: (wallet: Wallet) => void
 }
 
 export function Login({
-  setWallet
 }: LoginProps
 ) {
   const [isPanelOpen, setPanelOpen] = React.useState(false)
@@ -40,8 +39,7 @@ export function Login({
   })
 
   async function onClick() {
-    const _wallet = await login()
-    setWallet(_wallet)
+    const _wallet = await useLogin()
   }
 
   async function submitKey(event: React.FormEvent<HTMLFormElement>) {
@@ -50,7 +48,7 @@ export function Login({
     const formData = new FormData(event.target as HTMLFormElement)
     const { openApiKey } = Object.fromEntries(formData) as any
 
-    const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}User`)
+    const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}/User`)
     const doc = col.record(wallet?.getPublicKeyString()!)
     const user = await doc.get().catch(() => null)
 

@@ -39,7 +39,8 @@ async function getWallet(account: string, db: Polybase) {
     return wallet
   } else {
     // TODO: this needs to be changed since we're not storing the private key
-    const privateKey = await eth.decrypt(user.data.pvkey, account)
+    // in practice, this can all be deleted in favor of features/auth
+    const privateKey = await eth.decrypt(user.data.apiKey, account)
     return Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
   }
 }

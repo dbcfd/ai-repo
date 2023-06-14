@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
+set -e 
 
+if [ -z "$DID_PRIVATE_KEY" ]; then
+  echo "DID_PRIVATE_KEY is missing. Run 'composedb did:generate-private-key'"
+  exit 1
+fi
+ 
 OUT_DIR=generated
 
 create_model () {

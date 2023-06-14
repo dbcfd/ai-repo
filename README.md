@@ -11,6 +11,22 @@ Features
 
 ## Getting Started
 
+### Env vars
+
+Copy .env.sample to .env.local
+
+### Dependencies
+
+Install ceramic:
+- npm install --location=global @ceramicnetwork/cli
+- npm install --location=global @composedb/cli
+
+Generate a DID: `export DID_PRIVATE_KEY=$(composedb did:generate-private-key)`
+
+Run the daemon: `CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB=true npx @ceramicnetwork/cli daemon --network inmemory`
+
+### Running the server
+
 First, run the development server:
 
 ```bash
