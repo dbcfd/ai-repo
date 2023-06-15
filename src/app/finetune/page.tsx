@@ -1,4 +1,5 @@
+import { FineTuningList } from '../../components/finetuning'
 
 export default function Page() {
-  return <h1>Finetunes</h1>
+  return <h1><FineTuningList /></h1>
 }

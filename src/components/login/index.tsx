@@ -1,12 +1,9 @@
 'use client'
 
 import React from 'react'
-import Wallet from 'ethereumjs-wallet'
-import { useSpring, animated } from 'react-spring'
-import { usePolybase } from '@polybase/react'
+import { useSpring, animated, a } from 'react-spring'
+import { User, truncateString } from '@/utils'
 import { XCircleIcon } from '@heroicons/react/24/solid'
-
-import { Account, truncateString } from '@/utils'
 import { AuthContext, getEthereumAddress } from '@/features/auth'
 
 interface LoginProps {
@@ -17,41 +14,41 @@ export function Login({
 ) {
   const [isPanelOpen, setPanelOpen] = React.useState(false)
   const [sidePanel, setSidePanel] = React.useState<HTMLElement | null>(null)
-  const { loading, auth, login, logout } = React.useContext(AuthContext)
-  const db = usePolybase()
-
+  const { auth, login } = React.useContext(AuthContext)
 
   const [windowWidth, setWindowWidth] = React.useState(1000);
-  const [ethAddr, setEthAddr] = React.useState<string | null>(null);
+  const [ethAddrAbbrv, setEthAddrAbbrv] = React.useState<string | null>(null);
   const [ensAddr, setEnsAddr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    async function getAddress() {
-      if (auth?.signer) {
-        const addr = await getEthereumAddress(auth)
-        if (addr) {
-          setEthAddr(truncateString(addr, 6))
-        } else {
-          setEthAddr(null)
-        }
-      }
+    const addr = auth?.ethereumAddress
+    if (addr) {
+      setEthAddrAbbrv(truncateString(addr, 6))
+    } else {
+      setEthAddrAbbrv(null)
     }
-    getAddress().catch(console.error)
-  }, [auth]);
+  }, [auth?.ethereumAddress]);
 
   React.useEffect(() => {
     async function getEnsAddress() {
-      if (auth?.provider && ethAddr) {
-        const addr = await auth.provider.lookupAddress(ethAddr)
-        if (addr) {
-          setEnsAddr(addr)
-        } else {
-          setEnsAddr(null)
+      if (auth?.ethereumAddress) {
+        try {
+
+          const addr = await auth.provider.lookupAddress(auth.ethereumAddress)
+
+          if (addr) {
+            setEnsAddr(addr)
+          } else {
+            setEnsAddr(null)
+          }
+        }
+        catch (ex) {
+          console.log(`Can't lookup ENS address`, ex)
         }
       }
     }
-    getEnsAddress().catch(console.error)
-  }, [auth, ethAddr]);
+    getEnsAddress()
+  }, [auth?.provider]);
 
   React.useEffect(() => {
     if (window) {
@@ -78,28 +75,30 @@ export function Login({
     const formData = new FormData(event.target as HTMLFormElement)
     const { openApiKey } = Object.fromEntries(formData) as any
 
-    if (ethAddr) {
-      const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}/User`)
-      const doc = col.record(ethAddr)
-      const user = await doc.get().catch(() => null)
-
-
+    if (ethAddrAbbrv) {
+      const col = auth!.db.collection<User>('User')
+      const result = await col.record(auth!.ethereumAddress).get().catch(() => null)
+      const user = result?.data
       if (user) {
-        const res = await user.call('setAPIKey', [openApiKey])
-
-        if (res) {
-          // TODO: success popper
+        try {
+          const res = await auth!.db.collection<User>('User').record(auth!.ethereumAddress).call('setAPIKey', [openApiKey])
+          if (res) {
+            // TODO: success popper
+            console.log('set api key')
+          }
+        } catch (ex) {
+          throw new Error(`Failed to call polybase setApiKey: ${ex}`)
         }
       }
     }
   }
 
-  if (ethAddr) {
+  if (ethAddrAbbrv) {
 
     return (
       <>
         <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={() => setPanelOpen(true)}>
-          {ensAddr ? ensAddr : ethAddr}
+          {ensAddr ? ensAddr : ethAddrAbbrv}
         </button>
         <animated.div
           ref={setSidePanel}
@@ -110,7 +109,7 @@ export function Login({
               <div>
                 <div className='flex justify-between items-center'>
                   <h3 className='text-lg text-ellipsis overflow-hidden font-bold'>
-                    {ensAddr ? ensAddr : ethAddr}
+                    {ensAddr ? ensAddr : ethAddrAbbrv}
                   </h3>
                   <button className='flex items-center justify-center text-xs uppercase h-[26px]' onClick={() => setPanelOpen(false)}>
                     <XCircleIcon height={24} />
