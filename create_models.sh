@@ -3,11 +3,11 @@ set -e
 
 CURRENT_DIR=$(pwd)
 OUT_DIR=$CURRENT_DIR/generated
-COMPOSEDB_CMD="sh composedb"
+COMPOSEDB_CMD="composedb"
 
 cd $1
 
-source composedb.env
+source $CURRENT_DIR/composedb.env
 
 create_model () {
   echo "Creating composite from "$1" as "$2

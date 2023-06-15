@@ -42,6 +42,13 @@ collection User {
     this.publicKey = ctx.publicKey;
     this.apiKey = apiKey;
   }
+  
+  setApiKey(apiKey: string) {
+    if (this.publicKey != ctx.publicKey.toHex()) {
+      throw error ('invalid owner');
+    }
+    this.apiKey = apiKey;
+  }
 
   setProfile(name: string) {
     if (this.publicKey != ctx.publicKey.toHex()) {
@@ -61,6 +68,7 @@ collection FineTuningCommits {
   owner: User;
   
   @index(commitLog, version);
+  @index(version);
   
   constructor(owner: User, id: string, commitLog: string, version: Version) {
     this.owner = owner;

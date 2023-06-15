@@ -7,7 +7,7 @@ import { ComposeClient } from '@composedb/client'
 import * as definition from '../../../generated/runtime.json'
 import { RuntimeCompositeDefinition } from '@composedb/types'
 import { Polybase } from '@polybase/client'
-import { Account } from '@/utils'
+import { User } from '@/utils'
 
 type AuthenticatedSession = {
     signer: JsonRpcSigner
@@ -18,24 +18,9 @@ type AuthenticatedSession = {
     composedb: ComposeClient
     db: Polybase
     apiKey?: string
+    ethereumAddress: string,
 }
 
-export function isLoggedIn(auth: AuthenticatedSession | null): boolean {
-    if (auth?.didSession && auth.signer) {
-        return true
-    } else {
-        return false
-    }
-}
-
-export async function getEthereumAddress(auth: AuthenticatedSession | null): Promise<string | null> {
-    if (auth?.signer) {
-        const addr = await auth.signer.getAddress()
-        return addr
-    } else {
-        return null
-    }
-}
 
 type LoginFn = () => Promise<AuthenticatedSession | null>
 type LogoutFn = () => Promise<void>
@@ -107,25 +92,34 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         return { h: 'eth-personal-sign', sig: await signer.signMessage(data) }
     })
 
-    const col = db.collection<Account>('User')
-    const doc = col.record(accountId.address)
-    const user = await doc.get().catch(() => null)
-    if (!user || !user.data) {
-        await col.create([accountId.address, '']).catch((e) => {
-            console.error(e)
-            throw e
-        })
+    try {
+
+        const col = db.collection<User>('User')
+        const doc = col.record(accountId.address)
+        const user = await doc.get().catch(() => null)
+        if (!user || !user.data) {
+            await col.create([accountId.address, '']).catch((e) => {
+                console.error(e)
+                throw e
+            })
+        }
+    } catch (ex) {
+        throw new Error(`Failed to create user: ${ex}`)
     }
 
-    return {
+    const ethereumAddress = await signer.getAddress()
+    
+    const auth = {
         ceramic,
         composedb,
         eth: ethereum,
         provider,
         db,
         didSession,
-        signer
+        signer,
+        ethereumAddress
     }
+    return auth
 }
 
 export const AuthContext = createContext<AuthenticationMemo>({

@@ -1,7 +1,7 @@
-import {createContext, useContext, useMemo} from "react";
-import {AuthContext} from "../auth";
-import {ApolloClient, ApolloLink, InMemoryCache, NormalizedCacheObject, Observable} from "@apollo/client";
-import {DID} from "dids";
+import { createContext, useContext, useMemo } from "react";
+import { AuthContext } from "../auth";
+import { ApolloClient, ApolloLink, InMemoryCache, NormalizedCacheObject, Observable } from "@apollo/client";
+import { DID } from "dids";
 
 type ComposeDBMemo = {
     did: DID
@@ -10,7 +10,7 @@ type ComposeDBMemo = {
 
 export const ComposeDBContext = createContext<ComposeDBMemo>(null)
 
-export function ComposeDB({children}) {
+export function ComposeDB({ children }) {
     const auth = useContext(AuthContext).auth
 
 
