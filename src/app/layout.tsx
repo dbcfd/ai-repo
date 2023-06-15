@@ -4,9 +4,8 @@ import * as React from 'react'
 import Link from 'next/link'
 import { Inter } from 'next/font/google'
 import { Login } from "@/components"
-import Wallet from 'ethereumjs-wallet'
 
-import { WalletContext } from '@/utils'
+import { AuthProvider } from '../features/auth'
 
 import './globals.css'
 
@@ -16,11 +15,10 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
-  }) {
-  const [wallet, setWallet] = React.useState(null as Wallet | null)
+}) {
   return (
     <html lang="en">
-      <WalletContext.Provider value={{ wallet }}>
+      <AuthProvider>
         <body className={inter.className}>
           <nav className="flex justify-between items-center w-full">
             <div className='flex items-center'>
@@ -34,11 +32,11 @@ export default function RootLayout({
                 <p className='uppercase text-md mr-4'>model</p>
               </Link>
             </div>
-            <Login setWallet={setWallet} />
+            <Login />
           </nav>
           {children}
         </body>
-      </WalletContext.Provider>
+      </AuthProvider>
     </html>
   )
 }

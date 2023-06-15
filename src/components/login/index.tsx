@@ -6,27 +6,58 @@ import { useSpring, animated } from 'react-spring'
 import { usePolybase } from '@polybase/react'
 import { XCircleIcon } from '@heroicons/react/24/solid'
 
-import { Account, WalletContext, truncateString, useLogin } from '@/utils'
+import { Account, truncateString } from '@/utils'
+import { AuthContext, getEthereumAddress } from '@/features/auth'
 
 interface LoginProps {
-  setWallet: (wallet: Wallet) => void
 }
 
 export function Login({
-  setWallet
 }: LoginProps
 ) {
   const [isPanelOpen, setPanelOpen] = React.useState(false)
   const [sidePanel, setSidePanel] = React.useState<HTMLElement | null>(null)
-  const { wallet } = React.useContext(WalletContext)
-  const login = useLogin()
+  const { loading, auth, login, logout } = React.useContext(AuthContext)
   const db = usePolybase()
 
-  let windowWidth = 1000
 
-  if (window) {
-    windowWidth = window.innerWidth
-  }
+  const [windowWidth, setWindowWidth] = React.useState(1000);
+  const [ethAddr, setEthAddr] = React.useState<string | null>(null);
+  const [ensAddr, setEnsAddr] = React.useState<string | null>(null);
+
+  const getAddr = React.useEffect(() => {
+    async function getAddress() {
+      if (auth?.signer) {
+        const addr = await getEthereumAddress(auth)
+        if (addr) {
+          setEthAddr(truncateString(addr, 6))
+        } else {
+          setEthAddr(null)
+        }
+      }
+    }
+    getAddress()
+  }, [auth?.signer]);
+
+  const getEns = React.useEffect(() => {
+    async function getEnsAddress() {
+      if (auth?.provider && ethAddr) {
+        const addr = await auth.provider.lookupAddress(ethAddr)
+        if (addr) {
+          setEnsAddr(addr)
+        } else {
+          setEnsAddr(null)
+        }
+      }
+    }
+    getEnsAddress()
+  }, [auth?.signer]);
+
+  React.useEffect(() => {
+    if (window) {
+      setWindowWidth(window.innerWidth)
+    }
+  }, []);
 
   const sidePanelProps = useSpring({
     config: {
@@ -38,8 +69,7 @@ export function Login({
   })
 
   async function onClick() {
-    const _wallet = await login()
-    setWallet(_wallet)
+    await login()
   }
 
   async function submitKey(event: React.FormEvent<HTMLFormElement>) {
@@ -48,24 +78,28 @@ export function Login({
     const formData = new FormData(event.target as HTMLFormElement)
     const { openApiKey } = Object.fromEntries(formData) as any
 
-    const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}User`)
-    const doc = col.record(wallet?.getPublicKeyString()!)
-    const user = await doc.get().catch(() => null)
+    if (ethAddr) {
+      const col = db.collection<Account>(`${process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE}/User`)
+      const doc = col.record(ethAddr)
+      const user = await doc.get().catch(() => null)
 
-    if (user) {
-      const res = await user.call('setAPIKey', [openApiKey])
 
-      if (res) {
-        // TODO: success popper
+      if (user) {
+        const res = await user.call('setAPIKey', [openApiKey])
+
+        if (res) {
+          // TODO: success popper
+        }
       }
     }
   }
 
-  if (wallet) {
+  if (ethAddr) {
+
     return (
       <>
         <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={() => setPanelOpen(true)}>
-          {truncateString(wallet.getPublicKeyString(), 6)}
+          {ensAddr ? ensAddr : ethAddr}
         </button>
         <animated.div
           ref={setSidePanel}
@@ -76,7 +110,7 @@ export function Login({
               <div>
                 <div className='flex justify-between items-center'>
                   <h3 className='text-lg text-ellipsis overflow-hidden font-bold'>
-                    {truncateString(wallet.getPublicKeyString(), 6)}
+                    {ensAddr ? ensAddr : ethAddr}
                   </h3>
                   <button className='flex items-center justify-center text-xs uppercase h-[26px]' onClick={() => setPanelOpen(false)}>
                     <XCircleIcon height={24} />

@@ -1,4 +1,9 @@
-export const schema = `
+const { Polybase } = require('@polybase/client')
+const Wallet = require('ethereumjs-wallet').default
+const { ethPersonalSign } = require('@polybase/eth')
+require('dotenv').config()
+
+const schema = `
 @public 
 collection Version {
   id: string;
@@ -30,10 +35,9 @@ collection User {
   name?: string;
   @delegate
   publicKey: PublicKey;
-  privateKey: string;
   apiKey: string;
 
-  constructor(id: string, privateKey: string, apikey: string, name?: string) {
+  constructor(id: string, apiKey: string, name?: string) {
     this.id = id;
     this.publicKey = ctx.publicKey;
     this.apiKey = apiKey;
@@ -82,10 +86,38 @@ collection AIModelCommits {
   constructor (owner: User, id: string, commitLog: string, version: Version, fineTuning: FineTuningCommits[]) {
     this.id = id;
     this.name = name;
+    this.owner = owner;
     this.commitLog = commitLog;
     this.version = version;
     this.fineTuning = fineTuning;
   }
 }
-`;
+`
 
+async function load(privateKey: string, polybaseNamespace: string) {
+  if (!privateKey) {
+    throw new Error('No private key provided')
+  }
+  if (!polybaseNamespace) {
+    throw new Error('Missing Polybase namespace')
+  }
+
+  const db = new Polybase({
+    defaultNamespace: polybaseNamespace,
+    signer: async (data: any) => {
+      const wallet = Wallet.fromPrivateKey(Buffer.from(privateKey, 'hex'))
+      return { h: 'eth-personal-sign', sig: ethPersonalSign(wallet.getPrivateKey(), data) }
+    },
+  })
+
+  await db.applySchema(schema)
+
+  return 'Schema loaded'
+}
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY ?? ''
+const POLYBASE_NAMESPACE = process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE ?? ''
+
+load(PRIVATE_KEY, POLYBASE_NAMESPACE)
+  .then(console.log)
+  .catch(console.error)

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e 
 
 CURRENT_DIR=$(pwd)
 OUT_DIR=$CURRENT_DIR/generated
