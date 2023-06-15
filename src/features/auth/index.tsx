@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, createContext, useContext } from 'react'
 import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
-import { AccountId } from 'caip'
 import { DIDSession } from 'did-session'
-import { ethers, JsonRpcSigner } from 'ethers'
+import { BrowserProvider, Eip1193Provider, ethers, JsonRpcSigner } from 'ethers'
 import { CeramicClient } from '@ceramicnetwork/http-client'
 import { ComposeClient } from '@composedb/client'
 import * as definition from '../../../generated/runtime.json'
@@ -12,8 +11,8 @@ import { Account } from '@/utils'
 
 type AuthenticatedSession = {
     signer: JsonRpcSigner
-    provider: any
-    eth: any
+    provider: BrowserProvider
+    eth: Eip1193Provider
     didSession: DIDSession
     ceramic: CeramicClient
     composedb: ComposeClient

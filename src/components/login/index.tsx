@@ -23,6 +23,7 @@ export function Login({
 
   const [windowWidth, setWindowWidth] = React.useState(1000);
   const [ethAddr, setEthAddr] = React.useState<string | null>(null);
+  const [ensAddr, setEnsAddr] = React.useState<string | null>(null);
 
   const getAddr = React.useEffect(() => {
     async function getAddress() {
@@ -36,6 +37,20 @@ export function Login({
       }
     }
     getAddress()
+  }, [auth?.signer]);
+
+  const getEns = React.useEffect(() => {
+    async function getEnsAddress() {
+      if (auth?.provider && ethAddr) {
+        const addr = await auth.provider.lookupAddress(ethAddr)
+        if (addr) {
+          setEnsAddr(addr)
+        } else {
+          setEnsAddr(null)
+        }
+      }
+    }
+    getEnsAddress()
   }, [auth?.signer]);
 
   React.useEffect(() => {
@@ -84,7 +99,7 @@ export function Login({
     return (
       <>
         <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={() => setPanelOpen(true)}>
-          {ethAddr}
+          {ensAddr ? ensAddr : ethAddr}
         </button>
         <animated.div
           ref={setSidePanel}
@@ -95,7 +110,7 @@ export function Login({
               <div>
                 <div className='flex justify-between items-center'>
                   <h3 className='text-lg text-ellipsis overflow-hidden font-bold'>
-                    {ethAddr}
+                    {ensAddr ? ensAddr : ethAddr}
                   </h3>
                   <button className='flex items-center justify-center text-xs uppercase h-[26px]' onClick={() => setPanelOpen(false)}>
                     <XCircleIcon height={24} />
