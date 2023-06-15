@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, createContext, useContext } from 'react'
+import {useState, useEffect, useCallback, useMemo, createContext, ReactNode} from 'react'
 import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
 import { DIDSession } from 'did-session'
 import { BrowserProvider, Eip1193Provider, ethers, JsonRpcSigner } from 'ethers'
@@ -17,6 +17,7 @@ type AuthenticatedSession = {
     ceramic: CeramicClient
     composedb: ComposeClient
     db: Polybase
+    apiKey?: string
 }
 
 export function isLoggedIn(auth: AuthenticatedSession | null): boolean {
@@ -48,6 +49,11 @@ type AuthenticationMemo = {
 
 const CERAMIC_AUTH = 'ceramic:auth'
 
+declare global {
+    interface Window {
+        ethereum: any;
+    }
+}
 
 async function authenticateSession(): Promise<AuthenticatedSession | null> {
     const url = process.env.NEXT_PUBLIC_CERAMIC_URL
@@ -111,7 +117,7 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         })
     }
 
-    const auth = {
+    return {
         ceramic,
         composedb,
         eth: ethereum,
@@ -120,7 +126,6 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         didSession,
         signer
     }
-    return auth
 }
 
 export const AuthContext = createContext<AuthenticationMemo>({
@@ -130,8 +135,8 @@ export const AuthContext = createContext<AuthenticationMemo>({
     logout: async () => { },
 })
 
-export function AuthProvider({ children }) {
-    const [auth, setAuth] = useState<AuthenticationMemo['auth']>(null)
+export function AuthProvider({ children }: {children: ReactNode}) {
+    const [auth, setAuth] = useState<AuthenticatedSession | null>(null)
     const [loading, setLoading] = useState(true)
 
     const login = useCallback(async () => {

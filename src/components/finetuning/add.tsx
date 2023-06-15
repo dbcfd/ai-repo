@@ -1,10 +1,9 @@
-import {useContext, useState} from "react";
+import {ChangeEvent, FormEvent, useContext, useState} from "react";
 import {ComposeDBContext} from "@/features/composedb";
 import {gql, useMutation} from '@apollo/client';
 import * as semver from 'semver'
 import {OpenAIContext} from "@/features/openai";
-import * as fs from 'fs';
-import * as rd from 'readline'
+import {once} from "events";
 
 const CREATE_FINE_TUNING = gql`
     mutation CreateFineTuning($i: CreateFineTuningInput!){
@@ -40,8 +39,8 @@ type FineTuning = {
     completion: string,
 }
 
-export default function AddFineTuning({state}) {
-    const [selectedFile, setSelectedFile] = useState(null)
+export default function AddFineTuning() {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const composeDB = useContext(ComposeDBContext)
     const openAI = useContext(OpenAIContext)
 
@@ -51,11 +50,12 @@ export default function AddFineTuning({state}) {
 
     if (error) return `Submission error! ${error.message}`;
 
-    const onFileChange = (event) => {
+    const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files.length > 0)
         setSelectedFile(event.target.files[0])
     };
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         // Stop the form from submitting and refreshing the page.
         event.preventDefault()
 
@@ -63,36 +63,50 @@ export default function AddFineTuning({state}) {
             return <div>No File Selected</div>
         }
 
-        const reader = rd.createInterface(fs.createReadStream(selectedFile))
-        const fineTunes = []
-        reader.on('line', (l: string) => {
-            const ft: FineTuning = JSON.parse(l)
-            fineTunes.push(ft)
-        })
+        const doSubmit = async () => {
+            let fineTunes = []
+            const reader = new FileReader()
+            reader.onload = async (e) => {
+                if (!(e.target && e.target.result)) {
+                    return
+                }
+                fineTunes = e.target.result.toString().split(/\r\n|\r|\n/).map((l) => JSON.parse(l))
+            }
+            await reader.readAsText(selectedFile)
 
-        const name = event.name
-        const version = semver.parse(event.version)
-        const description = event.description
-        const tags = event.tags.split(',')
+            const target = event.target as typeof event.target & {
+                name: { value: string };
+                version: { value: string };
+                description: { value: string };
+                tags: { value: string };
+            };
 
-        const createFineTuneResponse = await openAI.api.createFile(selectedFile, 'fine-tune')
+            const name = target.name.value
+            const version = semver.parse(target.version.value)
+            const description = target.description.value
+            const tags = target.tags.value.split(',')
 
-        //TODO write to polybase
+            const createFineTuneResponse = await openAI.api.createFile(selectedFile, 'fine-tune')
 
-        // Get data from the form.
-        const input = {
-            name,
-            version,
-            tags,
-            description,
-            creator: composeDB.did,
-            link: createFineTuneResponse.data.id,
-            commitLog: 'blah',
+            //TODO write to polybase
+
+            // Get data from the form.
+            const input = {
+                name,
+                version,
+                tags,
+                description,
+                creator: composeDB.did,
+                link: createFineTuneResponse.data.id,
+                commitLog: 'blah',
+            }
+
+            addFineTuning({variables: input})
+
+            const id = data.document.id
         }
 
-        addFineTuning(input)
-
-        const id = data.document.id
+        doSubmit().catch(console.log)
     }
 
     return (

@@ -1,6 +1,7 @@
 import {useContext} from "react";
 import {ComposeDBContext} from "@/features/composedb";
 import { gql, useQuery } from '@apollo/client';
+import {QueryEdge, Version} from "@/components";
 
 const GET_FINE_TUNINGS = gql`
     query GetFineTunings {
@@ -14,10 +15,11 @@ const GET_FINE_TUNINGS = gql`
                         preRelease
                         build
                     }
+                    description
                     tags
                     tuning {
-                        data
-                        replacement
+                        prompt
+                        completion
                     }
                 }
             }
@@ -25,7 +27,19 @@ const GET_FINE_TUNINGS = gql`
     }
 `
 
-export default function GetFineTunings({state}) {
+type FineTune = {
+    prompt: string
+    completion: string
+}
+
+type FineTuning = {
+    version: Version
+    description: string
+    tags: Array<string>
+    tuning: Array<FineTune>
+}
+
+export default function GetFineTunings() {
     const composeDB = useContext(ComposeDBContext)
 
     const { loading, error, data } = useQuery(GET_FINE_TUNINGS);
@@ -36,8 +50,8 @@ export default function GetFineTunings({state}) {
 
     return (
         <div>
-            {data.fineTuningIndex.edges.map((fineTuning) => {
-                <div></div>
+            {data.fineTuningIndex.edges.map((edge: QueryEdge<FineTuning>) => {
+                <div>${edge.node.description}</div>
             })}
         </div>
     )

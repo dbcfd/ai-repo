@@ -9,16 +9,25 @@ type OpenAIMemo = {
 export const OpenAIContext = createContext<OpenAIMemo>(null)
 
 export function OpenAI({children}) {
-    const user = useContext(AuthContext).user
+    const auth = useContext(AuthContext).auth
 
-    const configuration = new Configuration({
-        apiKey: user.apiKey,
-    });
+    const value = useMemo(() => {
+        if (!auth) {
+            return <div>OpenAI can only be used inside of an Auth context</div>
+        }
 
-    const api = new OpenAIApi(configuration);
-    const value = useMemo(() => ({
-        api
-    }), [api])
+        if (!auth.apiKey) {
+            return <div>OpenAI used without api key being set</div>
+        }
+
+        const configuration = new Configuration({
+            apiKey: auth.apiKey,
+        });
+        const api = new OpenAIApi(configuration);
+        return ({
+            api
+        })
+    }, [auth])
 
     return (
         <OpenAIContext.Provider value={value}>

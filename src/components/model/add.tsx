@@ -1,8 +1,9 @@
-import {useContext, useState} from "react";
+import {FormEvent, useContext, useState} from "react";
 import {ComposeDBContext} from "@/features/composedb";
 import {gql, useMutation} from '@apollo/client';
 import * as semver from 'semver'
 import {OpenAIContext} from "@/features/openai";
+import {Version} from "@/components";
 
 const CREATE_AI_MODEL = gql`
     mutation CreateAIModel($i: CreateAIModelInput!){
@@ -29,20 +30,19 @@ const CREATE_AI_MODEL = gql`
       "baseModel":
       "tags": ["test"],
       "description": "FineTuning Test",
-      "creator": "some_did"
     }
   }
 }
  **/
 
-enum BaseModel {
+export enum BaseModel {
     Ada = 'Ada',
     Babbage = 'Babbage',
     Curie = 'Curie',
     Davinci = 'Davinci',
 }
 
-export default function AddAIModel({state}) {
+export default function AddAIModel() {
     const composeDB = useContext(ComposeDBContext)
     const openAI = useContext(OpenAIContext)
 
@@ -52,38 +52,50 @@ export default function AddAIModel({state}) {
 
     if (error) return `Submission error! ${error.message}`;
 
-    const handleSubmit = async (event) => {
-        // Stop the form from submitting and refreshing the page.
-        event.preventDefault()
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+        const doSubmit = async () => {
+            // Stop the form from submitting and refreshing the page.
+            event.preventDefault()
 
-        const name = event.name
-        const version = semver.parse(event.version)
-        const description = event.description
-        const tags = event.tags.split(',')
-        const model = BaseModel.Davinci
+            const target = event.target as typeof event.target & {
+                name: { value: string };
+                version: { value: string };
+                description: { value: string };
+                tags: { value: string };
+                finetune: { value: string };
+            };
 
-        const fineTuneResponse = await openAI.api.createFineTune({
-            training_file: event.finetune,
-            model: model.toString(),
-            suffix: name.trim(),
-        })
+            const name = target.name.value
+            const version = semver.parse(target.version.value)
+            const description = target.description.value
+            const tags = target.tags.value.split(',')
+            const model = BaseModel.Davinci
 
-        //TODO write to polybase
+            const fineTuneResponse = await openAI.api.createFineTune({
+                training_file: target.finetune.value,
+                model: model.toString(),
+                suffix: name.trim(),
+            })
 
-        // Get data from the form.
-        const input = {
-            version,
-            tags,
-            description,
-            baseModel: model,
-            creator: composeDB.did,
-            link: fineTuneResponse.data.id,
-            commitLog: 'polybase id',
+            //TODO write to polybase
+
+            // Get data from the form.
+            const input = {
+                version,
+                tags,
+                description,
+                baseModel: model,
+                creator: composeDB.did,
+                link: fineTuneResponse.data.id,
+                commitLog: 'polybase id',
+            }
+
+            addModel({variables: input})
+
+            const id = data.document.id
         }
 
-        addModel(input)
-
-        const id = data.document.id
+        doSubmit().catch(console.log)
     }
 
     return (
