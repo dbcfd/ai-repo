@@ -19,10 +19,12 @@ const GET_FINE_TUNING = gql`
     }
 `
 
-export default function GetFineTuning({state, id}) {
+export default function GetFineTuning({id}: {id: string}) {
     const composeDB = useContext(ComposeDBContext)
 
-    const { loading, error, data } = useQuery(GET_FINE_TUNING);
+    const { loading, error, data } = useQuery(GET_FINE_TUNING, {
+        variables: { id: id }
+    });
 
     if (loading) return 'Submitting...';
 
@@ -30,7 +32,7 @@ export default function GetFineTuning({state, id}) {
 
     return (
         <div>
-
+            ${data.description}
         </div>
     )
 }

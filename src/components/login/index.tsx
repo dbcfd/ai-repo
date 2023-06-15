@@ -25,7 +25,7 @@ export function Login({
   const [ethAddr, setEthAddr] = React.useState<string | null>(null);
   const [ensAddr, setEnsAddr] = React.useState<string | null>(null);
 
-  const getAddr = React.useEffect(() => {
+  React.useEffect(() => {
     async function getAddress() {
       if (auth?.signer) {
         const addr = await getEthereumAddress(auth)
@@ -36,10 +36,10 @@ export function Login({
         }
       }
     }
-    getAddress()
-  }, [auth?.signer]);
+    getAddress().catch(console.error)
+  }, [auth]);
 
-  const getEns = React.useEffect(() => {
+  React.useEffect(() => {
     async function getEnsAddress() {
       if (auth?.provider && ethAddr) {
         const addr = await auth.provider.lookupAddress(ethAddr)
@@ -50,8 +50,8 @@ export function Login({
         }
       }
     }
-    getEnsAddress()
-  }, [auth?.signer]);
+    getEnsAddress().catch(console.error)
+  }, [auth, ethAddr]);
 
   React.useEffect(() => {
     if (window) {
