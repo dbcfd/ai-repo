@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback, useMemo, createContext, ReactNode} from 'react'
+import { useState, useEffect, useCallback, useMemo, createContext, ReactNode } from 'react'
 import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
 import { DIDSession } from 'did-session'
 import { BrowserProvider, Eip1193Provider, ethers, JsonRpcSigner } from 'ethers'
@@ -6,7 +6,7 @@ import { CeramicClient } from '@ceramicnetwork/http-client'
 import { ComposeClient } from '@composedb/client'
 import * as definition from '../../../generated/runtime.json'
 import { RuntimeCompositeDefinition } from '@composedb/types'
-import { Polybase } from '@polybase/client'
+import { CollectionRecordResponse, Polybase } from '@polybase/client'
 import { User } from '@/utils'
 
 type AuthenticatedSession = {
@@ -18,7 +18,8 @@ type AuthenticatedSession = {
     composedb: ComposeClient
     db: Polybase
     apiKey?: string
-    ethereumAddress: string,
+    polybaseUser: CollectionRecordResponse<User>
+    ethereumAddress: string
 }
 
 
@@ -92,23 +93,25 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         return { h: 'eth-personal-sign', sig: await signer.signMessage(data) }
     })
 
+    let user;
     try {
 
         const col = db.collection<User>('User')
         const doc = col.record(accountId.address)
-        const user = await doc.get().catch(() => null)
-        if (!user || !user.data) {
-            await col.create([accountId.address, '']).catch((e) => {
+        let created = await doc.get().catch(() => null)
+        if (!created || !created.data) {
+            created = await col.create([accountId.address, '']).catch((e) => {
                 console.error(e)
                 throw e
             })
+            user = created.data
         }
     } catch (ex) {
         throw new Error(`Failed to create user: ${ex}`)
     }
 
     const ethereumAddress = await signer.getAddress()
-    
+
     const auth = {
         ceramic,
         composedb,
@@ -117,7 +120,8 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         db,
         didSession,
         signer,
-        ethereumAddress
+        ethereumAddress,
+        polybaseUser: user
     }
     return auth
 }
@@ -129,7 +133,7 @@ export const AuthContext = createContext<AuthenticationMemo>({
     logout: async () => { },
 })
 
-export function AuthProvider({ children }: {children: ReactNode}) {
+export function AuthProvider({ children }: { children: ReactNode }) {
     const [auth, setAuth] = useState<AuthenticatedSession | null>(null)
     const [loading, setLoading] = useState(true)
 

@@ -19,10 +19,12 @@ export function FineTuningList() {
             if (auth) {
 
                 const col = auth.db.collection<FineTuningCommits>(Collections.FineTuningCommits)
-                const commits = await col.where('owner', '==', auth.ethereumAddress).sort('version.major', 'desc').get().catch(() => null)
-                if (commits) {
-                    const { data, cursor } = commits
-                    setCommits(data)
+                const commits = await col.where('owner', '==', auth.polybaseUser).get().catch(() => null)
+                if (commits?.data && commits.data.length > 0) {
+                    // put A before B if major version is greater
+                    commits.data.sort((a, b) => b.data.version.major - a.data.version.major )
+
+                    setCommits(commits.data)
                 }
             }
         }
