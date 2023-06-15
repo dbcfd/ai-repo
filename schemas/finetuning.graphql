@@ -7,15 +7,15 @@ type SemVer {
 }
 
 type FineTune {
-  data: String! @string(minLength: 1, maxLength: 10000)
-  replacement: String! @string(minLength: 1, maxLength: 10000)
+  prompt: String! @string(minLength: 1, maxLength: 10000)
+  completion: String! @string(minLength: 1, maxLength: 10000)
 }
 
 type FineTuning @createModel(accountRelation: LIST, description: "ai.repo fine tuning") {
-  creator: DID! @accountReference
-  commitLog: ID!
   version: SemVer!
   description: String! @string(minLength: 3, maxLength: 1000)
   tags: [String!] @string(minLength: 1, maxLength: 100) @list(maxLength: 100)
   tuning: [FineTune!] @list(maxLength: 100000)
+  link: String! @string(minLength: 1, maxLength: 200)
+  commitLog: String! @string(minLength: 1, maxLength: 200)
 }
