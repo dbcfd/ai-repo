@@ -12,6 +12,9 @@ collection Version {
   patch: number;
   preRelease?: string;
   build?: string;
+
+  @index(major, minor, patch);
+
   
   constructor(major: number, minor: number, patch: number, preRelease?: string, build?: string) {
     this.id = major + '.' + minor + '.' + patch;
@@ -67,8 +70,10 @@ collection FineTuningCommits {
   @delegate
   owner: User;
   
-  @index(commitLog, version);
   @index(version);
+  @index(owner);
+  @index(commitLog, version);
+  @index(owner, [version, desc]);
   
   constructor(owner: User, id: string, commitLog: string, version: Version) {
     this.owner = owner;
@@ -89,7 +94,11 @@ collection AIModelCommits {
   @delegate
   owner: User;
   
+  @index(owner);
+  @index(version);
+
   @index(owner, commitLog, version);
+  @index(owner, [version, desc]);
 
   constructor (owner: User, id: string, commitLog: string, version: Version, fineTuning: FineTuningCommits[]) {
     this.id = id;
