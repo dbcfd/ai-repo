@@ -42,7 +42,9 @@ export function FineTuningList() {
     return (
         <>
             <div className='w-full h-full flex flex-col justify-between'>
-                {commits?.map(d => <FineTuning data={d.data} />) || 'No commits'}
+                {commits?.map(commit => {
+                    return <FineTuning key={commit.id} data={commit.data} />
+                }) || 'No commits'}
             </div>
         </>
     )

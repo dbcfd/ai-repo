@@ -18,12 +18,12 @@ type AuthenticatedSession = {
     composedb: ComposeClient
     db: Polybase
     apiKey?: string
-    polybaseUser: CollectionRecordResponse<User>
+    polybaseUser: CollectionRecordResponse<User | null>
     ethereumAddress: string
 }
 
 
-type LoginFn = () => Promise<AuthenticatedSession | null>
+type LoginFn = () => Promise<void>
 type LogoutFn = () => Promise<void>
 
 type AuthenticationMemo = {
@@ -93,26 +93,22 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         return { h: 'eth-personal-sign', sig: await signer.signMessage(data) }
     })
 
-    let user;
-    try {
-
-        const col = db.collection<User>('User')
-        const doc = col.record(accountId.address)
-        let created = await doc.get().catch(() => null)
-        if (!created || !created.data) {
-            created = await col.create([accountId.address, '']).catch((e) => {
-                console.error(e)
-                throw e
-            })
-            user = created.data
-        }
-    } catch (ex) {
-        throw new Error(`Failed to create user: ${ex}`)
+    const col = db.collection<User>('User')
+    const doc = col.record(accountId.address)
+    let created = await doc.get().catch(() => null)
+    if (!created || !created.data) {
+        created = await col.create([accountId.address, '']).catch((e) => {
+            console.error(e)
+            throw e
+        })
+    }
+    if (!created.data) {
+        throw new Error('Failed to create user')
     }
 
     const ethereumAddress = await signer.getAddress()
 
-    const auth = {
+    return {
         ceramic,
         composedb,
         eth: ethereum,
@@ -121,15 +117,14 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         didSession,
         signer,
         ethereumAddress,
-        polybaseUser: user
+        polybaseUser: created
     }
-    return auth
 }
 
 export const AuthContext = createContext<AuthenticationMemo>({
     loading: true,
     auth: null,
-    login: async () => null,
+    login: async () => { },
     logout: async () => { },
 })
 

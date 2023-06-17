@@ -40,7 +40,7 @@ export function ModelList() {
     return (
         <>
             <div className='w-full h-full flex flex-col justify-between'>
-                {commits?.map(d => <Model data={d.data} />) || 'No AI model commits'}
+                {commits?.map(d => <Model key={d.id} data={d.data} />) || 'No AI model commits'}
             </div>
         </>
     )

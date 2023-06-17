@@ -42,7 +42,13 @@ type FineTuning = {
 export default function AddFineTuning() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const composeDB = useContext(ComposeDBContext)
+    if (!composeDB) {
+        throw new Error('ComposeDB not initialized')
+    }
     const openAI = useContext(OpenAIContext)
+    if (!openAI) {
+        throw new Error('OpenAI not initialized')
+    }
 
     const [addFineTuning, { data, loading, error }] = useMutation(CREATE_FINE_TUNING);
 

@@ -4,7 +4,7 @@ import React from 'react'
 import { useSpring, animated, a } from 'react-spring'
 import { User, truncateString } from '@/utils'
 import { XCircleIcon } from '@heroicons/react/24/solid'
-import { AuthContext, getEthereumAddress } from '@/features/auth'
+import { AuthContext } from '@/features/auth'
 
 interface LoginProps {
 }
@@ -48,7 +48,7 @@ export function Login({
       }
     }
     getEnsAddress()
-  }, [auth?.provider]);
+  }, [auth]);
 
   React.useEffect(() => {
     if (window) {
