@@ -1,13 +1,33 @@
 #!/usr/bin/env bash
 set -e 
 
+WHEEL_DIR=wheel
 CURRENT_DIR=$(pwd)
 OUT_DIR=$CURRENT_DIR/generated
-COMPOSEDB_CMD="composedb"
+COMPOSEDB_CMD="./composedb"
 
-cd $1
+mkdir $WHEEL_DIR | true
+cd $WHEEL_DIR
 
-source $CURRENT_DIR/composedb.env
+npm init --yes
+
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/ceramicstudio/wheel/main/wheel.sh | bash
+
+(./wheel quiet --project-name "gen" -n "in-memory" generate)&
+
+../wait-for-it.sh localhost:7007
+
+echo "Ceramic is now available"
+
+cd gen
+
+while [ ! -f "composedb" ]; do
+  sleep 1
+done
+
+echo "ComposeDB is now available"
+
+source composedb.env
 
 create_model () {
   echo "Creating composite from "$1" as "$2
@@ -38,6 +58,8 @@ $COMPOSEDB_CMD composite:deploy $OUT_DIR/merged.json
 $COMPOSEDB_CMD composite:compile $OUT_DIR/merged.json $OUT_DIR/runtime.json
 
 cd $CURRENT_DIR
+
+echo "Ceramic is currently running in the background"
 
 
 

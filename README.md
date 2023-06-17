@@ -15,14 +15,14 @@ Features
 
 Copy .env.sample to .env.local
 
-### Setup Ceramic
-Follow the instructions for setting up [wheel](https://github.com/ceramicstudio/wheel). When running wheel, choose to 
-install ceramic and composedb. Wheel will setup into a project directory, that we will call <wheel directory>
-
 ### Generate Models
+Install `timeout` if not present
+
+    brew install coreutils
+
 Run `create_models.sh` to generate models
 
-    ./create_models.sh <wheel_directory>
+    ./create_models.sh
 
 #### You can also run ceramic without wheel (not recommended)
 
@@ -38,12 +38,9 @@ Run the daemon: `CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB=true npx @ceramicnetwork
 
 To run a graphiql server for query exploration, you will need to add to you environment the appropriate ceramic variables
 
-    cd <wheel directory>
-    source composedb.env
-
-Now you can run the graphiql server
-
-    cd <wheel directory>
+    cd wheel
+    source gen/composedb.env
+    ./composedb graphql:server --graphiql --port=5005 ../generated/runtime.json
 
 ### Run Server
 
