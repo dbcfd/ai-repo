@@ -1,4 +1,4 @@
-import {createContext, useContext, useMemo} from "react";
+import {createContext, ReactNode, useContext, useMemo} from "react";
 import {AuthContext} from "../auth";
 import { Configuration, OpenAIApi } from "openai";
 
@@ -6,20 +6,15 @@ type OpenAIMemo = {
     api: OpenAIApi
 }
 
-export const OpenAIContext = createContext<OpenAIMemo>(null)
+export const OpenAIContext = createContext<OpenAIMemo | null>(null)
 
-export function OpenAI({children}) {
+export function OpenAI({children}: { children: ReactNode }) {
     const auth = useContext(AuthContext).auth
 
     const value = useMemo(() => {
-        if (!auth) {
-            return <div>OpenAI can only be used inside of an Auth context</div>
+        if (!auth || !auth.apiKey) {
+            return null
         }
-
-        if (!auth.apiKey) {
-            return <div>OpenAI used without api key being set</div>
-        }
-
         const configuration = new Configuration({
             apiKey: auth.apiKey,
         });
@@ -29,9 +24,16 @@ export function OpenAI({children}) {
         })
     }, [auth])
 
+    function renderWithContext(value: OpenAIMemo | null) {
+        if(!value) {
+            return <div>OpenAI can only be used in an authenticated context with api key set</div>
+        }
+        return children
+    }
+
     return (
         <OpenAIContext.Provider value={value}>
-            {children}
+            {renderWithContext(value)}
         </OpenAIContext.Provider>
     )
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from "react";
+import {createContext, ReactNode, useContext, useMemo} from "react";
 import { AuthContext } from "../auth";
 import { ApolloClient, ApolloLink, InMemoryCache, NormalizedCacheObject, Observable } from "@apollo/client";
 import { DID } from "dids";
@@ -8,17 +8,15 @@ type ComposeDBMemo = {
     client: ApolloClient<NormalizedCacheObject>
 }
 
-export const ComposeDBContext = createContext<ComposeDBMemo>(null)
+export const ComposeDBContext = createContext<ComposeDBMemo | null>(null)
 
-export function ComposeDB({ children }) {
+export function ComposeDB({ children }: { children: ReactNode }) {
     const auth = useContext(AuthContext).auth
 
-
     const value = useMemo(() => {
-        if (!auth) {
-            return <div>ComposeDB can only be used in an authenticated context</div>
+        if(!auth) {
+            return null
         }
-
         const link = new ApolloLink((operation) => {
             return new Observable((observer) => {
                 auth.composedb.execute(operation.query, operation.variables).then(
@@ -41,9 +39,16 @@ export function ComposeDB({ children }) {
         })
     }, [auth])
 
+    function renderWithContext(value: ComposeDBMemo | null) {
+        if(!value) {
+            return <div>ComposeDB can only be used in an authenticated context</div>
+        }
+        return children
+    }
+
     return (
         <ComposeDBContext.Provider value={value}>
-            {children}
+            {renderWithContext(value)}
         </ComposeDBContext.Provider>
     )
 }

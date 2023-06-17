@@ -44,7 +44,13 @@ export enum BaseModel {
 
 export default function AddAIModel() {
     const composeDB = useContext(ComposeDBContext)
+    if (!composeDB) {
+        throw new Error('ComposeDB not initialized')
+    }
     const openAI = useContext(OpenAIContext)
+    if (!openAI) {
+        throw new Error('OpenAI not initialized')
+    }
 
     const [addModel, { data, loading, error }] = useMutation(CREATE_AI_MODEL);
 
