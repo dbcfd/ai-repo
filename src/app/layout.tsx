@@ -35,7 +35,9 @@ export default function RootLayout({
               <p className='uppercase text-md mr-4'>model</p>
             </Link>
           </div>
-          <Login />
+          <AuthProvider>
+            <Login />
+          </AuthProvider>
         </nav>
         <ComposeDB>
           <AuthProvider>
