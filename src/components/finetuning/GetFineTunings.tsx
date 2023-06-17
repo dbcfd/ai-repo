@@ -56,11 +56,11 @@ export default function GetFineTunings({onSelectCommit}: {onSelectCommit: Select
 
     const { loading, error, data } = useQuery(GET_FINE_TUNINGS);
 
-    if (loading) return 'Submitting...';
+    if (loading) return <p>'Submitting...'</p>;
 
-    if (error) return `Submission error! ${error.message}`;
+    if (error) return <p>`Submission error! ${error.message}`</p>;
 
-    function displayFineTunings(): ReactNode {
+    function displayFineTunings() {
         if(data.fineTuningIndex.edges.length == 0) {
             return <div>No FineTunings</div>
         }
