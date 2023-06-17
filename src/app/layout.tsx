@@ -3,10 +3,10 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { Inter } from 'next/font/google'
-import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
 import { Login } from "@/components"
 
 import { AuthProvider } from '../features/auth'
+import { ComposeDB } from '@/features/composedb';
 
 import './globals.css'
 
@@ -20,13 +20,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const client = new ApolloClient({
-    uri: GQL_URL,
-    cache: new InMemoryCache()
-  });
   return (
     <html lang="en">
-      <ApolloProvider client={client}>
+      <ComposeDB>
         <AuthProvider>
           <body className={inter.className}>
             <nav className="flex justify-between items-center w-full">
@@ -46,7 +42,7 @@ export default function RootLayout({
             {children}
           </body>
         </AuthProvider>
-      </ApolloProvider>
+      </ComposeDB>
     </html>
   )
 }
