@@ -2,10 +2,11 @@ import {useContext} from "react";
 import {ComposeDBContext} from "@/features/composedb";
 import { gql, useQuery } from '@apollo/client';
 import {QueryEdge, Version} from "@/components";
+import {BaseModel} from "@/components/model/AddAIModel";
 
-const GET_FINE_TUNINGS = gql`
-    query GetFineTunings {
-        fineTuningIndex(first: 10) {
+const GET_AI_MODELS = gql`
+    query GetAIModels {
+        aiModelIndex(first: 10) {
             edges {
                 node {
                     version {
@@ -15,34 +16,32 @@ const GET_FINE_TUNINGS = gql`
                         preRelease
                         build
                     }
+                    commitLog
+                    link
+                    name
+                    baseModel
                     description
                     tags
-                    tuning {
-                        prompt
-                        completion
-                    }
                 }
             }
         }
     }
 `
 
-type FineTune = {
-    prompt: string
-    completion: string
-}
-
-type FineTuning = {
+export type AIModel = {
+    name: string
     version: Version
-    description: string
+    commitLog: string
+    link: string
+    baseModel: BaseModel
     tags: Array<string>
-    tuning: Array<FineTune>
+    description: string
 }
 
-export default function GetFineTunings() {
+export default function GetAIModels() {
     const composeDB = useContext(ComposeDBContext)
 
-    const { loading, error, data } = useQuery(GET_FINE_TUNINGS);
+    const { loading, error, data } = useQuery(GET_AI_MODELS);
 
     if (loading) return 'Submitting...';
 
@@ -50,8 +49,8 @@ export default function GetFineTunings() {
 
     return (
         <div>
-            {data.fineTuningIndex.edges.map((edge: QueryEdge<FineTuning>) => {
-                <div>${edge.node.description}</div>
+            {data.edges.map((edge: QueryEdge<AIModel>) => {
+                edge.node.description
             })}
         </div>
     )

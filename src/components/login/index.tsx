@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, {ReactElement} from 'react'
 import { useSpring, animated, a } from 'react-spring'
 import { User, truncateString } from '@/utils'
 import { XCircleIcon } from '@heroicons/react/24/solid'
@@ -94,10 +94,10 @@ export function Login({
   }
 
   if (ethAddrAbbrv) {
-
     return (
       <>
         <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={() => setPanelOpen(true)}>
+          Login&nbsp;
           {ensAddr ? ensAddr : ethAddrAbbrv}
         </button>
         <animated.div
@@ -131,9 +131,9 @@ export function Login({
     )
   }
 
-  return (
-    <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={onClick}>
-      Connect
-    </button>
-  )
+  return <div>
+      <button className='bg-blue-purple hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full' onClick={onClick}>
+        Connect
+      </button>
+  </div>
 }
