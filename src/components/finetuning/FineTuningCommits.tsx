@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Collections, FineTuningCommits } from '@/utils'
-import { useParams } from "next/navigation";
+// import { useParams } from "next/navigation";
 import Link from 'next/link'
 import { AuthContext } from '@/features/auth'
 import { CollectionRecordResponse } from '@polybase/client';
@@ -11,7 +11,7 @@ import GetFineTunings from "@/components/finetuning/GetFineTunings";
 
 export function FineTuningCommits({link}: {link?: string}) {
     const [commits, setCommits] = useState<CollectionRecordResponse<FineTuningCommits, FineTuningCommits>[] | null>(null)
-    const { account } = useParams()
+    // const { account } = useParams()
     const { auth, } = React.useContext(AuthContext)
 
     React.useEffect(() => {
