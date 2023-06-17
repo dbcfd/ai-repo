@@ -42,7 +42,7 @@ export enum BaseModel {
     Davinci = 'Davinci',
 }
 
-export default function AddAIModel() {
+export default function AddAIModel({finetuning}: {finetuning: string}) {
     const composeDB = useContext(ComposeDBContext)
     if (!composeDB) {
         throw new Error('ComposeDB not initialized')

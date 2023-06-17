@@ -39,7 +39,7 @@ export function ComposeDB({ children }: { children: ReactNode }) {
         })
     }, [auth])
 
-    function renderWithContext(value: ComposeDBMemo | null) {
+    function renderWithContext(value: ComposeDBMemo | null): ReactNode {
         if(!value) {
             return <div>ComposeDB can only be used in an authenticated context</div>
         }
