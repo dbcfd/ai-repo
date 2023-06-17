@@ -3,7 +3,7 @@ import {ComposeDBContext} from "@/features/composedb";
 import { gql, useQuery } from '@apollo/client';
 import {QueryEdge, Version} from "@/components";
 import AddAIModel from "@/components/model/AddAIModel";
-import { Link } from 'react-router-dom'
+import Link from 'next/link'
 
 const GET_FINE_TUNINGS = gql`
     query GetFineTunings {
@@ -56,11 +56,11 @@ export default function GetFineTunings({onSelectCommit}: {onSelectCommit: Select
 
     const { loading, error, data } = useQuery(GET_FINE_TUNINGS);
 
-    if (loading) return 'Submitting...';
+    if (loading) return <p>'Submitting...'</p>;
 
-    if (error) return `Submission error! ${error.message}`;
+    if (error) return <p>`Submission error! ${error.message}`</p>;
 
-    function displayFineTunings(): ReactNode {
+    function displayFineTunings() {
         if(data.fineTuningIndex.edges.length == 0) {
             return <div>No FineTunings</div>
         }
@@ -70,7 +70,7 @@ export default function GetFineTunings({onSelectCommit}: {onSelectCommit: Select
                 <div>${edge.node.name}</div>
                 <div>${edge.node.description}</div>
                 <div onClick={() => onSelectCommit(edge.node.link)}>Commits</div>
-                <Link to='../model/AddAiModel' state={{fineTuningId: edge.node.id}}>Train</Link>
+                <Link href='../model/AddAiModel'>Train</Link>
                 </>
             })}
         </div>

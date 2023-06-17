@@ -52,9 +52,9 @@ export default function AddFineTuning() {
 
     const [addFineTuning, { data, loading, error }] = useMutation(CREATE_FINE_TUNING);
 
-    if (loading) return 'Submitting...';
+    if (loading) return <p>'Submitting...'</p>;
 
-    if (error) return `Submission error! ${error.message}`;
+    if (error) return <p>`Submission error! ${error.message}`</p>;
 
     const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0)

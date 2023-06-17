@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { AIModelCommits, Collections } from '../../utils/types'
-import { useParams } from "next/navigation";
+// import { useParams } from "next/navigation";
 import { AuthContext } from '@/features/auth'
 import { CollectionRecordResponse } from '@polybase/client';
 import { Model } from './Model';
@@ -10,7 +10,7 @@ import { Model } from './Model';
 export function ModelList() {
 
     const [commits, setCommits] = useState<CollectionRecordResponse<AIModelCommits, AIModelCommits>[] | null>(null)
-    const { account } = useParams()
+    // const { account } = useParams()
     const { auth, } = React.useContext(AuthContext)
 
     React.useEffect(() => {
