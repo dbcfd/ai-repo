@@ -1,10 +1,9 @@
-import {useContext} from "react";
-import {ComposeDBContext} from "@/features/composedb";
-import { gql, useQuery } from '@apollo/client';
+import {useContext, useEffect, useState} from "react";
 import {QueryEdge, Version} from "@/components";
 import {BaseModel} from "@/components/model/AddAIModel";
+import {AuthContext} from "@/features/auth";
 
-const GET_AI_MODELS = gql`
+const GET_AI_MODELS = `
     query GetAIModels {
         aiModelIndex(first: 10) {
             edges {
@@ -38,20 +37,46 @@ export type AIModel = {
     description: string
 }
 
-export default function GetAIModels() {
-    const composeDB = useContext(ComposeDBContext)
+type Result = {
+    aiModelIndex: {
+        edges: Array<QueryEdge<AIModel>>
+    }
+}
 
-    const { loading, error, data } = useQuery(GET_AI_MODELS);
+export type SelectHandler = (id: string) => void
 
-    if (loading) return 'Submitting...';
+export default function GetAIModels({onSelectCommit}: {onSelectCommit: SelectHandler}) {
+    const { auth } = useContext(AuthContext)
+    const [aiModels, setAiModels] = useState<Array<AIModel>>([])
 
-    if (error) return `Submission error! ${error.message}`;
+    const getAIModels = async () => {
+        const result = await auth?.composedb.executeQuery(GET_AI_MODELS)
+        console.log(result)
+        if (result && result.data) {
+            const res = result as Result
+            setAiModels(res.aiModelIndex.edges.map((e) => e.node))
+        }
+    }
+
+    useEffect(() => {
+        getAIModels()
+    })
+
+    function displayModels() {
+        if(aiModels.length == 0) {
+            return <p>No models found</p>
+        } else {
+            return (
+                <div>
+                    {aiModels.map((model) => {
+                        return model.description
+                    })}
+                </div>
+                )
+        }
+    }
 
     return (
-        <div>
-            {data.edges.map((edge: QueryEdge<AIModel>) => {
-                edge.node.description
-            })}
-        </div>
+        displayModels()
     )
 }

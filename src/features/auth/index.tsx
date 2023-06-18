@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, createContext, ReactNode } from 'react'
+import {useState, useEffect, useCallback, useMemo, createContext, ReactNode} from 'react'
 import { EthereumWebAuth, getAccountId } from '@didtools/pkh-ethereum'
 import { DIDSession } from 'did-session'
 import { BrowserProvider, Eip1193Provider, ethers, JsonRpcSigner } from 'ethers'
@@ -8,8 +8,16 @@ import * as definition from '../../../generated/runtime.json'
 import { RuntimeCompositeDefinition } from '@composedb/types'
 import { CollectionRecordResponse, Polybase } from '@polybase/client'
 import { User } from '@/utils'
+import {
+    ApolloClient,
+    ApolloLink,
+    ApolloProvider,
+    InMemoryCache,
+    NormalizedCacheObject,
+    Observable
+} from "@apollo/client";
 
-type AuthenticatedSession = {
+export type AuthenticatedSession = {
     signer: JsonRpcSigner
     provider: BrowserProvider
     eth: Eip1193Provider
@@ -41,7 +49,7 @@ declare global {
     }
 }
 
-async function authenticateSession(): Promise<AuthenticatedSession | null> {
+async function authenticateSession(): Promise<AuthenticatedSession> {
     const url = process.env.NEXT_PUBLIC_CERAMIC_URL
     if (!url) {
         throw Error('Missing ceramic URL configuration')
@@ -83,6 +91,7 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
     if (!authMethod) {
         throw new Error('Missing authMethod')
     }
+
     const didSession = await DIDSession.authorize(authMethod, { resources: composedb.resources })
     if (!didSession) {
         throw new Error('Missing didSession')
@@ -97,6 +106,7 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
     const doc = col.record(accountId.address)
     let created = await doc.get().catch(() => null)
     if (!created || !created.data) {
+        console.log(`No existing user for address ${accountId.address}`)
         created = await col.create([accountId.address, '']).catch((e) => {
             console.error(e)
             throw e
@@ -106,7 +116,8 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         throw new Error('Failed to create user')
     }
 
-    const ethereumAddress = await signer.getAddress()
+    //const ethereumAddress = await signer.getAddress()
+    const ethereumAddress = accountId.address
 
     return {
         ceramic,
@@ -117,7 +128,7 @@ async function authenticateSession(): Promise<AuthenticatedSession | null> {
         didSession,
         signer,
         ethereumAddress,
-        polybaseUser: created
+        polybaseUser: created,
     }
 }
 
@@ -128,24 +139,31 @@ export const AuthContext = createContext<AuthenticationMemo>({
     logout: async () => { },
 })
 
+type OnAuthFn = (auth: AuthenticatedSession) => void
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [auth, setAuth] = useState<AuthenticatedSession | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
 
     const login = useCallback(async () => {
-        const completedAuth = await authenticateSession()
-        setAuth(completedAuth)
-    }, [])
+        if(!auth && !loading) {
+            console.log('Authenticating')
+            setLoading(true)
+            const completedAuth = await authenticateSession()
+            setAuth(completedAuth)
+            console.log('Authentication complete')
+        }
+    }, [auth, loading])
 
 
     const logout = useCallback(async () => {
+        console.log('Logout')
         setAuth(null)
     }, [])
 
     useEffect(() => {
-        // const userId = Cookies.get(userIdPath)
+        console.log('Marking login as complete')
         setLoading(false)
-        // if (userId) setAuth({ userId })
     }, [])
 
     const value = useMemo(() => ({

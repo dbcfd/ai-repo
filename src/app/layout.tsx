@@ -6,7 +6,6 @@ import { Inter } from 'next/font/google'
 import { Login } from "@/components"
 
 import { AuthProvider } from '../features/auth'
-import { ComposeDB } from '@/features/composedb';
 
 import './globals.css'
 
@@ -38,12 +37,8 @@ export default function RootLayout({
           <AuthProvider>
             <Login />
           </AuthProvider>
+          {children}
         </nav>
-        <ComposeDB>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ComposeDB>
       </body>
     </html>
   )

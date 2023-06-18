@@ -1,11 +1,10 @@
 import {FormEvent, useContext, useState} from "react";
-import {ComposeDBContext} from "@/features/composedb";
-import {gql, useMutation} from '@apollo/client';
 import * as semver from 'semver'
 import {OpenAIContext} from "@/features/openai";
 import {Version} from "@/components";
+import {AuthContext} from "@/features/auth";
 
-const CREATE_AI_MODEL = gql`
+const CREATE_AI_MODEL = `
     mutation CreateAIModel($i: CreateAIModelInput!){
         createAIModel(input: $i){
             document {
@@ -19,6 +18,7 @@ const CREATE_AI_MODEL = gql`
 {
   "i": {
     "content": {
+      "creator": "account did",
       "version": {
         "major": 1,
         "minor": 0,
@@ -43,20 +43,10 @@ export enum BaseModel {
 }
 
 export default function AddAIModel({finetuning}: {finetuning: string}) {
-    const composeDB = useContext(ComposeDBContext)
-    if (!composeDB) {
-        throw new Error('ComposeDB not initialized')
-    }
+    const { auth } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
-    if (!openAI) {
-        throw new Error('OpenAI not initialized')
-    }
 
-    const [addModel, { data, loading, error }] = useMutation(CREATE_AI_MODEL);
-
-    if (loading) return 'Submitting...';
-
-    if (error) return `Submission error! ${error.message}`;
+    if (!openAI) return <p>No OpenAI connection</p>
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         const doSubmit = async () => {
@@ -91,14 +81,12 @@ export default function AddAIModel({finetuning}: {finetuning: string}) {
                 tags,
                 description,
                 baseModel: model,
-                creator: composeDB.did,
+                creator: auth?.didSession.did,
                 link: fineTuneResponse.data.id,
                 commitLog: 'polybase id',
             }
 
-            addModel({variables: input})
-
-            const id = data.document.id
+            const res = await auth?.composedb.executeQuery(CREATE_AI_MODEL, input)
         }
 
         doSubmit().catch(console.log)

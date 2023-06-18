@@ -10,7 +10,6 @@
     "migrate": "npx ts-node ./schemas/polybase.ts"
   },
   "dependencies": {
-    "@apollo/client": "^3.7.15",
     "@ceramicnetwork/cli": "^2.31.0",
     "@ceramicnetwork/http-client": "^2.23.0",
     "@composedb/cli": "^0.4.5",

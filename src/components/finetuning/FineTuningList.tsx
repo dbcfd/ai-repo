@@ -1,7 +1,6 @@
 "use client"
 
-import React, {useCallback, useState} from 'react'
-import { FineTuning } from './FineTuning';
+import React, {useState} from 'react'
 import GetFineTunings from "@/components/finetuning/GetFineTunings";
 import {FineTuningCommits} from "@/components/finetuning/FineTuningCommits";
 import AddFineTuning from "@/components/finetuning/AddFineTuning";
