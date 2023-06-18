@@ -42,7 +42,16 @@ export enum BaseModel {
     Davinci = 'Davinci',
 }
 
-export default function AddAIModel({finetuning}: {finetuning: string}) {
+type Result = {
+    createAIModel: {
+        document: {
+            id: string
+        }
+    }
+}
+
+export default function AddAIModel({finetuning}: {finetuning?: string}) {
+    const [created, setCreated] = useState(<div/>)
     const { auth } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
 
@@ -62,37 +71,75 @@ export default function AddAIModel({finetuning}: {finetuning: string}) {
             };
 
             const name = target.name.value
-            const version = semver.parse(target.version.value)
+            const semverVersion = semver.parse(target.version.value)
+            if (!semverVersion) {
+                setCreated(<div>Invalid Version</div>)
+                return
+            }
+            const version = {
+                major: semverVersion.major,
+                minor: semverVersion.minor,
+                patch: semverVersion.patch,
+            }
             const description = target.description.value
             const tags = target.tags.value.split(',')
             const model = BaseModel.Davinci
 
-            const fineTuneResponse = await openAI.api.createFineTune({
+            const req = {
                 training_file: target.finetune.value,
-                model: model.toString(),
-                suffix: name.trim(),
-            })
+                model: model.toString().toLowerCase(),
+                suffix: name.trim().replace(' ', '_'),
+            }
+
+            console.log(`FineTune=${JSON.stringify(req)}`)
+
+            const fineTuneResponse = await openAI.api.createFineTune(req)
+            console.log(`Trained as ${fineTuneResponse.data.id}`)
 
             //TODO write to polybase
 
             // Get data from the form.
-            const input = {
-                version,
+            const content = {
+                name,
+                version: {
+                    major: version.major,
+                    minor: version.minor,
+                    patch: version.patch,
+                },
                 tags,
                 description,
                 baseModel: model,
-                creator: auth.user?.didSession.did,
+                creator: "did:key:z6MkngiTvSAWB22emEMWkRwQYEDiEiSBtJZwv8pp3mvpKVxX",
                 link: fineTuneResponse.data.id,
                 commitLog: 'polybase id',
             }
 
-            const res = await auth.api.composedb.executeQuery(CREATE_AI_MODEL, input)
+            const variables = { i: { content } }
+
+            const res = await auth.api.composedb.executeQuery(CREATE_AI_MODEL, variables)
+
+            if (res.data) {
+                console.log(`Result=${JSON.stringify(res.data)}`)
+                const result = res.data as Result
+
+                if(result.createAIModel) {
+                    const id = result.createAIModel.document.id
+
+                    setCreated(<div>Successfully created ${id}</div>)
+                } else {
+                    setCreated(<div>ComposeDB failed to return id</div>)
+                }
+            } else if (res.errors) {
+                console.error(`Creation failed: ${JSON.stringify(variables)}`)
+                setCreated(<div>Creation failed: {res.errors.toString()}</div>)
+            }
         }
 
         doSubmit().catch(console.log)
     }
 
     return (
+        <div>
         <form onSubmit={handleSubmit} className='flex flex-col mt-12'>
             <label htmlFor="name">Name</label>
             <input type="text" id="name" name="name" required className='rounded p-2 mb-2 text-black' />
@@ -107,9 +154,12 @@ export default function AddAIModel({finetuning}: {finetuning: string}) {
             <input type="text" id="tags" name="tags" required className='rounded p-2 mb-2 text-black' />
 
             <label htmlFor="finetune">Fine Tune</label>
-            <input type="text" id="finetune" name="finetune" required className='rounded p-2 mb-2 text-black' />
+            <input type="text" id="finetune" name="finetune" required className='rounded p-2 mb-2 text-black' defaultValue="file-SLcdV1T3FE6e5tyxYf83A6zl"/>
 
-            <button type="submit" className='bg-blue-purple-light text-white py-2.5 px-4 mt-4 uppercase rounded flex items-center justify-center'>Add FineTuning</button>
+            <button type="submit" className='bg-blue-purple-light text-white py-2.5 px-4 mt-4 uppercase rounded flex items-center justify-center'>Create Model</button>
         </form>
+        <hr/>
+        <div>{created}</div>
+        </div>
     )
 }

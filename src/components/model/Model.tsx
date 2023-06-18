@@ -1,6 +1,6 @@
 "use client"
 
-import { AIModelCommits, } from '../../utils/types'
+import { AIModelCommits, } from '@/utils'
 
 
 export function Model({ data }: { data: AIModelCommits }) {

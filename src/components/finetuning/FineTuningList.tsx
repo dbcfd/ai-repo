@@ -19,6 +19,8 @@ export function FineTuningList() {
                 <FineTuningCommits link={undefined}/>
             </div>
             <div className='w-full h-full flex flex-col justify-between'>
+                Add Fine Tuning
+                <hr/>
                 <AddFineTuning/>
             </div>
         </>

@@ -1,11 +1,11 @@
 import {useContext, useEffect, useState} from "react";
-import {QueryEdge, Version} from "@/components";
+import {QueryData, QueryEdge, Version} from "@/components";
 import {BaseModel} from "@/components/model/AddAIModel";
 import {AuthContext} from "@/features/auth";
 
 const GET_AI_MODELS = `
     query GetAIModels {
-        aiModelIndex(first: 10) {
+        aIModelIndex(last: 50) {
             edges {
                 node {
                     version {
@@ -38,9 +38,7 @@ export type AIModel = {
 }
 
 type Result = {
-    aiModelIndex: {
-        edges: Array<QueryEdge<AIModel>>
-    }
+    aIModelIndex: QueryData<AIModel>
 }
 
 export type SelectHandler = (id: string) => void
@@ -51,10 +49,10 @@ export default function GetAIModels({onSelectCommit}: {onSelectCommit: SelectHan
 
     const getAIModels = async () => {
         const result = await auth.api.composedb.executeQuery(GET_AI_MODELS)
-        console.log(result)
         if (result && result.data) {
-            const res = result as Result
-            setAiModels(res.aiModelIndex.edges.map((e) => e.node))
+            const res = result.data as Result
+            const models = res.aIModelIndex.edges.map((e) => e.node)
+            setAiModels(models)
         }
     }
 
