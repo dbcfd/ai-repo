@@ -19,20 +19,19 @@ export function Login({}: LoginProps) {
   const [ensAddr, setEnsAddr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const addr = auth?.ethereumAddress
+    const addr = auth.user?.ethereumAddress
     if (addr) {
       setEthAddrAbbrv(truncateString(addr, 6))
     } else {
       setEthAddrAbbrv(null)
     }
-  }, [auth?.ethereumAddress]);
+  }, [auth.user?.ethereumAddress]);
 
   React.useEffect(() => {
     async function getEnsAddress() {
-      if (auth?.ethereumAddress) {
+      if (auth.user) {
         try {
-
-          const addr = await auth.provider.lookupAddress(auth.ethereumAddress)
+          const addr = await auth.user.provider.lookupAddress(auth.user.ethereumAddress)
 
           if (addr) {
             setEnsAddr(addr)
@@ -46,7 +45,7 @@ export function Login({}: LoginProps) {
       }
     }
     getEnsAddress()
-  }, [auth]);
+  }, [auth.user]);
 
   React.useEffect(() => {
     if (window) {
@@ -74,8 +73,8 @@ export function Login({}: LoginProps) {
     const { openAiKey } = Object.fromEntries(formData) as any
 
     if (ethAddrAbbrv) {
-      const col = auth!.db.collection<User>('User')
-      const result = await col.record(auth!.ethereumAddress).get().catch(() => null)
+      const col = auth.api.db.collection<User>('User')
+      const result = await col.record(auth.user!.ethereumAddress).get().catch(() => null)
       const user = result?.data
       if (user) {
         // try {

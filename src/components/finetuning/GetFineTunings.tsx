@@ -1,13 +1,15 @@
+"use client"
+
 import {ReactNode, useContext, useEffect, useState} from "react";
-import {QueryEdge, Version} from "@/components";
+import {QueryData, QueryEdge, Version} from "@/components";
 import AddAIModel from "@/components/model/AddAIModel";
-import Link from 'next/link'
 import {AuthContext} from "@/features/auth";
 import {FineTuning} from "@/components/finetuning/index";
+import { Link } from 'react-router-dom'
 
 const GET_FINE_TUNINGS = `
     query GetFineTunings {
-        fineTuningIndex(first: 10) {
+        fineTuningIndex(last: 50) {
             edges {
                 node {
                     id
@@ -34,39 +36,34 @@ const GET_FINE_TUNINGS = `
 `
 
 type Result = {
-    fineTuningIndex: {
-        edges: Array<QueryEdge<FineTuning>>
-    }
+    fineTuningIndex: QueryData<FineTuning>
 }
 
-export type SelectHandler = (id: string) => void
-
-export default function GetFineTunings({onSelectCommit}: {onSelectCommit: SelectHandler}) {
+export default function GetFineTunings() {
     const { auth } = useContext(AuthContext)
     const [fineTunings, setFineTunings] = useState<Array<FineTuning>>([])
 
     const getFineTunings = async () => {
-        const result = await auth?.composedb.executeQuery(GET_FINE_TUNINGS)
-        console.log(result)
-        if (result && result.data) {
-            const res = result as Result
-            setFineTunings(res.fineTuningIndex.edges.map((e) => e.node))
+        const result = await auth.api.composedb.executeQuery(GET_FINE_TUNINGS)
+        if(result.data) {
+            const res = result.data as Result
+            const ft = res.fineTuningIndex.edges.map((e) => e.node)
+            setFineTunings(ft)
+        } else if (result.errors) {
+            console.error(`Failed to get fine tunings: ${result.errors}`)
         }
     }
 
     function displayFineTunings() {
-        console.log(`ComposeDB return: ${fineTunings}`)
         if(fineTunings.length == 0) {
             return <div className="flex justify-between items-center w-full">No FineTunings</div>
         }
         return <div className="flex justify-between items-center w-full">
-            {fineTunings.map((edge) => {
-                return (<>
-                <div>${edge.name}</div>
-                <div>${edge.description}</div>
-                <div onClick={() => onSelectCommit(edge.link)}>Commits</div>
-                <Link href='../model/AddAiModel'>Train</Link>
-                </>)
+            {fineTunings.map((ft) => {
+                return (<div key={ft.id}>
+                <div key={ft.id+'_name'}>{ft.name}</div>
+                <div key={ft.id+'_desc'}>{ft.description}</div>
+                </div>)
             })}
         </div>
     }

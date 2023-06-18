@@ -15,15 +15,14 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/ceramicst
 
 (./wheel quiet --project-name "gen" -n "in-memory" generate)&
 
-../wait-for-it.sh localhost:7007 -t 120
+../wait-for-it.sh localhost:7007 -t 600
 
 echo "Ceramic is now available"
 
 cd gen
 
 while [ ! -f "composedb" ]; do
-  echo "Waiting for composedb to be available"
-  sleep 1
+  sleep 5
 done
 
 echo "ComposeDB is now available"

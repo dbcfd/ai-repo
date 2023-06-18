@@ -81,12 +81,12 @@ export default function AddAIModel({finetuning}: {finetuning: string}) {
                 tags,
                 description,
                 baseModel: model,
-                creator: auth?.didSession.did,
+                creator: auth.user?.didSession.did,
                 link: fineTuneResponse.data.id,
                 commitLog: 'polybase id',
             }
 
-            const res = await auth?.composedb.executeQuery(CREATE_AI_MODEL, input)
+            const res = await auth.api.composedb.executeQuery(CREATE_AI_MODEL, input)
         }
 
         doSubmit().catch(console.log)

@@ -25,7 +25,7 @@ export default function GetFineTuning({id}: {id: string}) {
     const [fineTuning, setFineTuning] = useState<FineTuning | null>(null)
 
     const getFineTuning = async () => {
-        const res = await auth.auth?.composedb.executeQuery(GET_FINE_TUNING, { id: id})
+        const res = await auth.auth.api.composedb.executeQuery(GET_FINE_TUNING, { id: id})
         const data = res?.data ?? {}
         setFineTuning(data as FineTuning)
     }

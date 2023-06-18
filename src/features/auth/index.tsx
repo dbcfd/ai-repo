@@ -8,27 +8,27 @@ import * as definition from '../../../generated/runtime.json'
 import { RuntimeCompositeDefinition } from '@composedb/types'
 import { CollectionRecordResponse, Polybase } from '@polybase/client'
 import { User } from '@/utils'
-import {
-    ApolloClient,
-    ApolloLink,
-    ApolloProvider,
-    InMemoryCache,
-    NormalizedCacheObject,
-    Observable
-} from "@apollo/client";
+require('dotenv').config()
 
-export type AuthenticatedSession = {
+export type Api = {
+    ceramic: CeramicClient
+    composedb: ComposeClient
+    openAIKey: string
+    db: Polybase
+}
+
+export type UserInfo = {
     signer: JsonRpcSigner
     provider: BrowserProvider
     eth: Eip1193Provider
     didSession: DIDSession
-    ceramic: CeramicClient
-    composedb: ComposeClient
-    db: Polybase
-    apiKey?: string
     polybaseUser: CollectionRecordResponse<User | null>
     ethereumAddress: string
-    openAIKey: string
+}
+
+export type AuthenticatedSession = {
+    api: Api
+    user?: UserInfo
 }
 
 
@@ -36,7 +36,7 @@ type LoginFn = () => Promise<void>
 type LogoutFn = () => Promise<void>
 
 type AuthenticationMemo = {
-    auth: AuthenticatedSession | null
+    auth: AuthenticatedSession
     loading: boolean
     login: LoginFn
     logout: LogoutFn
@@ -50,24 +50,7 @@ declare global {
     }
 }
 
-async function authenticateSession(): Promise<AuthenticatedSession> {
-    const url = process.env.NEXT_PUBLIC_CERAMIC_URL
-    if (!url) {
-        throw Error('Missing ceramic URL configuration')
-    }
-
-    const db = new Polybase({
-        defaultNamespace: process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE,
-    })
-
-    const ceramic = new CeramicClient(url);
-
-    const composedb = new ComposeClient({
-        ceramic: url,
-        // cast our definition as a RuntimeCompositeDefinition
-        definition: definition as RuntimeCompositeDefinition,
-    });
-
+async function authenticateSession(api: Api): Promise<UserInfo> {
     const { ethereum } = window
 
     if (!ethereum?.isMetaMask) {
@@ -93,17 +76,18 @@ async function authenticateSession(): Promise<AuthenticatedSession> {
         throw new Error('Missing authMethod')
     }
 
-    const didSession = await DIDSession.authorize(authMethod, { resources: composedb.resources })
+    const didSession = await DIDSession.authorize(authMethod, { resources: api.composedb.resources })
     if (!didSession) {
         throw new Error('Missing didSession')
     }
+    api.composedb.setDID(didSession.did)
     localStorage.setItem(CERAMIC_AUTH, didSession.serialize());
 
-    db.signer(async (data: string) => {
+    api.db.signer(async (data: string) => {
         return { h: 'eth-personal-sign', sig: await signer.signMessage(data) }
     })
 
-    const col = db.collection<User>('User')
+    const col = api.db.collection<User>('User')
     const doc = col.record(accountId.address)
     let created = await doc.get().catch(() => null)
     if (!created || !created.data) {
@@ -121,38 +105,66 @@ async function authenticateSession(): Promise<AuthenticatedSession> {
     const ethereumAddress = accountId.address
 
     return {
-        ceramic,
-        composedb,
         eth: ethereum,
         provider,
-        db,
         didSession,
         signer,
         ethereumAddress,
         polybaseUser: created,
-        openAIKey: process.env.NEXT_OPENAI_KEY!
+    }
+}
+
+function defaultAuthenticatedSession(): AuthenticatedSession {
+    const url = process.env.NEXT_PUBLIC_CERAMIC_URL
+    if (!url) {
+        throw Error('Missing ceramic URL configuration')
+    }
+
+    const db = new Polybase({
+        defaultNamespace: process.env.NEXT_PUBLIC_POLYBASE_DEFAULT_NAMESPACE,
+    })
+
+    const ceramic = new CeramicClient(url);
+
+    const composedb = new ComposeClient({
+        ceramic: url,
+        // cast our definition as a RuntimeCompositeDefinition
+        definition: definition as RuntimeCompositeDefinition,
+    });
+
+    const openAIKey = process.env.NEXT_PUBLIC_OPENAI_KEY
+    if (!openAIKey) {
+        throw Error('Missing OpenAI Key')
+    }
+
+    return {
+        api: {
+            ceramic,
+            composedb,
+            db,
+            openAIKey
+        },
     }
 }
 
 export const AuthContext = createContext<AuthenticationMemo>({
     loading: true,
-    auth: null,
+    auth: defaultAuthenticatedSession(),
     login: async () => { },
     logout: async () => { },
 })
 
-type OnAuthFn = (auth: AuthenticatedSession) => void
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [auth, setAuth] = useState<AuthenticatedSession | null>(null)
+    const [auth, setAuth] = useState<AuthenticatedSession>(defaultAuthenticatedSession)
     const [loading, setLoading] = useState(false)
 
     const login = useCallback(async () => {
-        if(!auth && !loading) {
+        if(!auth.user && !loading) {
             console.log('Authenticating')
             setLoading(true)
-            const completedAuth = await authenticateSession()
-            setAuth(completedAuth)
+            const userInfo = await authenticateSession(auth.api)
+            auth.user = userInfo
+            setAuth(auth)
             console.log('Authentication complete')
         }
     }, [auth, loading])
@@ -160,7 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = useCallback(async () => {
         console.log('Logout')
-        setAuth(null)
+        auth.user = undefined
+        setAuth(auth)
     }, [])
 
     useEffect(() => {

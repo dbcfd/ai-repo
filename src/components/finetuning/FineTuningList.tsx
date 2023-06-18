@@ -6,18 +6,17 @@ import {FineTuningCommits} from "@/components/finetuning/FineTuningCommits";
 import AddFineTuning from "@/components/finetuning/AddFineTuning";
 
 export function FineTuningList() {
-    const [commit, setCommit] = useState<string | undefined>()
     return (
         <>
             <div className='w-full h-full flex flex-col justify-between'>
                 Fine Tunings
                 <hr/>
-                <GetFineTunings onSelectCommit={setCommit}/>
+                <GetFineTunings/>
             </div>
             <div className='w-full h-full flex flex-col justify-between'>
                 Commits
                 <hr/>
-                <FineTuningCommits link={commit}/>
+                <FineTuningCommits link={undefined}/>
             </div>
             <div className='w-full h-full flex flex-col justify-between'>
                 <AddFineTuning/>

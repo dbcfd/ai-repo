@@ -14,10 +14,10 @@ export function ModelCommits({link}: {link?: string}) {
 
     React.useEffect(() => {
         async function getModels() {
-            if (auth && link) {
-                const col = auth.db.collection<AIModelCommits>(Collections.AIModelCommits)
+            if (auth.user && link) {
+                const col = auth.api.db.collection<AIModelCommits>(Collections.AIModelCommits)
                 const commits = await col
-                    .where('owner.id', '==', auth.polybaseUser)
+                    .where('owner.id', '==', auth.user.polybaseUser)
                     .where('link', '==', link)
                     .get().catch(() => null)
                 if (commits?.data && commits.data.length > 0) {                    // put A before B if major version is greater
@@ -30,7 +30,7 @@ export function ModelCommits({link}: {link?: string}) {
         getModels().catch(console.error)
     }, [auth, link]);
 
-    if (!auth?.ethereumAddress) {
+    if (!auth.user?.ethereumAddress) {
         return (<>
                 <div className='w-full h-full flex flex-col justify-between'>
                     {'Connect your metamask account'}

@@ -50,7 +50,7 @@ export default function GetAIModels({onSelectCommit}: {onSelectCommit: SelectHan
     const [aiModels, setAiModels] = useState<Array<AIModel>>([])
 
     const getAIModels = async () => {
-        const result = await auth?.composedb.executeQuery(GET_AI_MODELS)
+        const result = await auth.api.composedb.executeQuery(GET_AI_MODELS)
         console.log(result)
         if (result && result.data) {
             const res = result as Result

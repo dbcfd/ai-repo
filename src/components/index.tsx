@@ -11,3 +11,7 @@ export type Version = {
 export type QueryEdge<T> = {
     node: T
 }
+
+export type QueryData<T> = {
+    edges: Array<QueryEdge<T>>
+}

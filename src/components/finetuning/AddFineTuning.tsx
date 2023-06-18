@@ -1,3 +1,5 @@
+"use client"
+
 import {ChangeEvent, FormEvent, useContext, useState} from "react";
 import * as semver from 'semver'
 import {OpenAIContext} from "@/features/openai";
@@ -23,6 +25,7 @@ const CREATE_FINE_TUNING = `
         "minor": 0,
         "patch": 0
       },
+      "name": "test",
       "description": "FineTuning Test",
       "tags": ["test"],
       "tuning": [{"prompt":"test","completion":"test"}],
@@ -38,8 +41,16 @@ type FineTuning = {
     completion: string,
 }
 
+type Result = {
+    createFineTuning: {
+        document: {
+            id: string
+        }
+    }
+}
+
 export default function AddFineTuning() {
-    const [created, setCreated] = useState("")
+    const [created, setCreated] = useState(<div/>)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const { auth } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
@@ -58,7 +69,8 @@ export default function AddFineTuning() {
         event.preventDefault()
 
         if(!selectedFile) {
-            return <div>No File Selected</div>
+            setCreated(<div>No File Selected</div>)
+            return
         }
 
         const doSubmit = async () => {
@@ -81,6 +93,10 @@ export default function AddFineTuning() {
 
             const name = target.name.value
             const version = semver.parse(target.version.value)
+            if (!version) {
+                setCreated(<div>Invalid</div>)
+                return
+            }
             const description = target.description.value
             const tags = target.tags.value.split(',')
 
@@ -93,22 +109,33 @@ export default function AddFineTuning() {
             //TODO write to polybase
 
             // Get data from the form.
-            const input = {
-                creator: auth?.didSession.did,
+            const content = {
+                //creator: auth.user?.didSession.did,
+                creator: "did:key:z6MkngiTvSAWB22emEMWkRwQYEDiEiSBtJZwv8pp3mvpKVxX",
                 name,
-                version,
+                version: {
+                    major: version.major,
+                    minor: version.minor,
+                    patch: version.patch,
+                },
                 tags,
                 description,
                 link: createFineTuneResponse.data.id,
                 commitLog: 'blah',
             }
 
-            const res = await auth?.composedb.executeQuery(CREATE_FINE_TUNING, input)
-            console.log(`Created in ceramic: ${res}`)
+            const variables = { i: { content } }
+            const res = await auth.api.composedb.executeQuery(CREATE_FINE_TUNING, variables)
 
-            const id = res?.data?.id
+            if (res.data) {
+                console.log(res.data)
+                const id = (res.data as Result).createFineTuning.document.id
 
-            setCreated(`Successfully created ${id}`)
+                setCreated(<div>Successfully created ${id}</div>)
+            } else if (res.errors) {
+                console.error(`Creation failed: ${JSON.stringify(variables)}`)
+                setCreated(<div>Insert failed: {res.errors.toString()}</div>)
+            }
         }
 
         doSubmit().catch(console.log)
