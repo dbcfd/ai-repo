@@ -39,6 +39,7 @@ type FineTuning = {
 }
 
 export default function AddFineTuning() {
+    const [created, setCreated] = useState("")
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const { auth } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
@@ -83,7 +84,11 @@ export default function AddFineTuning() {
             const description = target.description.value
             const tags = target.tags.value.split(',')
 
-            const createFineTuneResponse = await openAI.api.createFile(selectedFile, 'fine-tune')
+            const createFineTuneResponse = await openAI.api.createFile(
+                selectedFile,
+                'fine-tune'
+            )
+            console.log(`Finetuned as ${createFineTuneResponse.data.id}`)
 
             //TODO write to polybase
 
@@ -99,30 +104,38 @@ export default function AddFineTuning() {
             }
 
             const res = await auth?.composedb.executeQuery(CREATE_FINE_TUNING, input)
+            console.log(`Created in ceramic: ${res}`)
 
             const id = res?.data?.id
+
+            setCreated(`Successfully created ${id}`)
         }
 
         doSubmit().catch(console.log)
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <label htmlFor="name">Name</label>
-            <input type="text" id="name" name="name" required />
+        <div>
+        <form onSubmit={handleSubmit} className='flex flex-col mt-12'>
+            <label htmlFor="name" className='mb-2 text-xs text-s-white-1 uppercase font-bold'>Name</label>
+            <input type="text" id="name" name="name" required className='rounded p-2 mb-2 text-black' />
 
-            <label htmlFor="version">Version (Semver)</label>
-            <input type="text" id="version" name="version" required />
+            <label htmlFor="version" className='mb-2 text-xs text-s-white-1 uppercase font-bold'>Version (Semver)</label>
+            <input type="text" id="version" name="version" required className='rounded p-2 mb-2 text-black' />
 
-            <label htmlFor="description">Description</label>
-            <input type="text" id="description" name="description" required />
+            <label htmlFor="description" className='mb-2 text-xs text-s-white-1 uppercase font-bold'>Description</label>
+            <input type="text" id="description" name="description" required className='rounded p-2 mb-2 text-black' />
 
-            <label htmlFor="tags">Tags (Comma Separated)</label>
-            <input type="text" id="tags" name="tags" required />
+            <label htmlFor="tags" className='mb-2 text-xs text-s-white-1 uppercase font-bold'>Tags (Comma Separated)</label>
+            <input type="text" id="tags" name="tags" required className='rounded p-2 mb-2 text-black' />
 
+            <label htmlFor="file" className='mb-2 text-xs text-s-white-1 uppercase font-bold'>Training Data</label>
             <input type="file" onChange={onFileChange} />
 
-            <button type="submit">Add FineTuning</button>
+            <button type="submit" className='bg-blue-purple-light text-white py-2.5 px-4 mt-4 uppercase rounded flex items-center justify-center'>Add FineTuning</button>
         </form>
+        <hr/>
+        <div>{created}</div>
+        </div>
     )
 }

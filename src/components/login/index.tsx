@@ -9,9 +9,7 @@ import { AuthContext } from '@/features/auth'
 interface LoginProps {
 }
 
-export function Login({
-}: LoginProps
-) {
+export function Login({}: LoginProps) {
   const [isPanelOpen, setPanelOpen] = React.useState(false)
   const [sidePanel, setSidePanel] = React.useState<HTMLElement | null>(null)
   const { auth, login } = React.useContext(AuthContext)
@@ -73,22 +71,24 @@ export function Login({
     event.preventDefault()
 
     const formData = new FormData(event.target as HTMLFormElement)
-    const { openApiKey } = Object.fromEntries(formData) as any
+    const { openAiKey } = Object.fromEntries(formData) as any
 
     if (ethAddrAbbrv) {
       const col = auth!.db.collection<User>('User')
       const result = await col.record(auth!.ethereumAddress).get().catch(() => null)
       const user = result?.data
       if (user) {
-        try {
-          const res = await auth!.db.collection<User>('User').record(auth!.ethereumAddress).call('setAPIKey', [openApiKey])
-          if (res) {
-            // TODO: success popper
-            console.log('set api key')
-          }
-        } catch (ex) {
-          throw new Error(`Failed to call polybase setApiKey: ${ex}`)
-        }
+        // try {
+        //   const res = await col
+        //       .record(auth!.ethereumAddress)
+        //       .call('setAPIKey', [openAiKey])
+        //   if (res) {
+        //     // TODO: success popper
+        //     console.log('set api key')
+        //   }
+        // } catch (ex) {
+        //   throw new Error(`Failed to call polybase setApiKey: ${ex}`)
+        // }
       }
     }
   }
@@ -115,11 +115,11 @@ export function Login({
                   </button>
                 </div>
                 <form onSubmit={submitKey} className='flex flex-col mt-12'>
-                  <label htmlFor='openApiKey' className='mb-2 text-xs text-s-white-1 uppercase font-bold'>OpenApi Key</label>
-                  <input name='openApiKey' className='rounded p-2 mb-2 text-black' />
+                  <label htmlFor='openAiKey' className='mb-2 text-xs text-s-white-1 uppercase font-bold'>OpenAI API Key</label>
+                  <input name='openAiKey' className='rounded p-2 mb-2 text-black' />
 
                   <button type='submit' className='bg-blue-purple-light text-white py-2.5 px-4 mt-4 uppercase rounded flex items-center justify-center'>
-                    Add API Key
+                    Add OpenAI API Key
                   </button>
                 </form>
               </div>

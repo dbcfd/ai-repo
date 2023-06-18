@@ -37,8 +37,8 @@ export default function RootLayout({
           <AuthProvider>
             <Login />
           </AuthProvider>
-          {children}
         </nav>
+        {children}
       </body>
     </html>
   )

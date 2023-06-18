@@ -33,18 +33,9 @@ export function FineTuningCommits({link}: {link?: string}) {
         getFineTuningCommits().catch(console.error)
     }, [auth, link]);
 
-    if (!auth?.ethereumAddress) {
-        return (<>
-                <div className='w-full h-full flex flex-col justify-between'>
-                    {'Connect your metamask account'}
-                </div></>
-        )
-    }
-
     return (
         <>
             <div className='w-full h-full flex flex-col justify-between'>
-                Commits
                 <hr/>
                 {commits?.map(commit => {
                     return <FineTuning key={commit.id} data={commit.data} />

@@ -6,21 +6,34 @@ type OpenAIMemo = {
     api: OpenAIApi
 }
 
-export const OpenAIContext = createContext<OpenAIMemo | null>(null)
+function connectOpenAI(key: string): OpenAIApi {
+    console.log(`Creating open ai with key ${key}`)
+    const configuration = new Configuration({
+        apiKey: "replace",
+        formDataCtor: CustomFormData
+    });
+    return new OpenAIApi(configuration);
+}
+
+class CustomFormData extends FormData {
+    getHeaders() {
+        return {}
+    }
+}
+
+export const OpenAIContext = createContext<OpenAIMemo | null>({
+    api: connectOpenAI(process.env.NEXT_OPENAI_KEY!)
+})
 
 export function OpenAI({children}: { children: ReactNode }) {
     const auth = useContext(AuthContext).auth
 
     const value = useMemo(() => {
-        if (!auth || !auth.apiKey) {
-            return null
-        }
-        const configuration = new Configuration({
-            apiKey: auth.apiKey,
-        });
-        const api = new OpenAIApi(configuration);
+        // if (!auth || !auth.openAIKey) {
+        //     return null
+        // }
         return ({
-            api
+            api: connectOpenAI(process.env.NEXT_OPENAI_KEY!)
         })
     }, [auth])
 

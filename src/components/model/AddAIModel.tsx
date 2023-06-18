@@ -93,23 +93,23 @@ export default function AddAIModel({finetuning}: {finetuning: string}) {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className='flex flex-col mt-12'>
             <label htmlFor="name">Name</label>
-            <input type="text" id="name" name="name" required />
+            <input type="text" id="name" name="name" required className='rounded p-2 mb-2 text-black' />
 
             <label htmlFor="version">Version (Semver)</label>
-            <input type="text" id="version" name="version" required />
+            <input type="text" id="version" name="version" required className='rounded p-2 mb-2 text-black' />
 
             <label htmlFor="description">Description</label>
-            <input type="text" id="description" name="description" required />
+            <input type="text" id="description" name="description" required className='rounded p-2 mb-2 text-black' />
 
             <label htmlFor="tags">Tags (Comma Separated)</label>
-            <input type="text" id="tags" name="tags" required />
+            <input type="text" id="tags" name="tags" required className='rounded p-2 mb-2 text-black' />
 
             <label htmlFor="finetune">Fine Tune</label>
-            <input type="text" id="finetune" name="finetune" required />
+            <input type="text" id="finetune" name="finetune" required className='rounded p-2 mb-2 text-black' />
 
-            <button type="submit">Add FineTuning</button>
+            <button type="submit" className='bg-blue-purple-light text-white py-2.5 px-4 mt-4 uppercase rounded flex items-center justify-center'>Add FineTuning</button>
         </form>
     )
 }

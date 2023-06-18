@@ -1,8 +1,7 @@
 import { FineTuningList } from '@/components/finetuning'
 
 export default function Page() {
-  return <div>
-    Fine tuning list goes here
+  return <div className="flex justify-between w-full">
     <FineTuningList />
   </div>
 }

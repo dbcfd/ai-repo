@@ -28,6 +28,7 @@ export type AuthenticatedSession = {
     apiKey?: string
     polybaseUser: CollectionRecordResponse<User | null>
     ethereumAddress: string
+    openAIKey: string
 }
 
 
@@ -129,6 +130,7 @@ async function authenticateSession(): Promise<AuthenticatedSession> {
         signer,
         ethereumAddress,
         polybaseUser: created,
+        openAIKey: process.env.NEXT_OPENAI_KEY!
     }
 }
 

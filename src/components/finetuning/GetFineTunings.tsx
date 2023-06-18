@@ -57,9 +57,9 @@ export default function GetFineTunings({onSelectCommit}: {onSelectCommit: Select
     function displayFineTunings() {
         console.log(`ComposeDB return: ${fineTunings}`)
         if(fineTunings.length == 0) {
-            return <div>No FineTunings</div>
+            return <div className="flex justify-between items-center w-full">No FineTunings</div>
         }
-        return <div>
+        return <div className="flex justify-between items-center w-full">
             {fineTunings.map((edge) => {
                 return (<>
                 <div>${edge.name}</div>

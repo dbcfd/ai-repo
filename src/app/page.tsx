@@ -6,7 +6,7 @@ export default function Home() {
       <div>
         Build AI models together.
       </div>
-      <div>
+      <div className="flex items-center">
         <ul>
           <li>Build Training Sets</li>
           <li>Train Models</li>

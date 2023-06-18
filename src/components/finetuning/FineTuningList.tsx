@@ -10,6 +10,8 @@ export function FineTuningList() {
     return (
         <>
             <div className='w-full h-full flex flex-col justify-between'>
+                Fine Tunings
+                <hr/>
                 <GetFineTunings onSelectCommit={setCommit}/>
             </div>
             <div className='w-full h-full flex flex-col justify-between'>
