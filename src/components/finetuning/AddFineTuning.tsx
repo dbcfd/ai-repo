@@ -53,7 +53,7 @@ type Result = {
 export default function AddFineTuning() {
     const [created, setCreated] = useState(<div/>)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const { auth } = useContext(AuthContext)
+    const { api } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
 
     if (!openAI) {
@@ -131,10 +131,10 @@ export default function AddFineTuning() {
             }
 
             const variables = { i: { content } }
-            const res = await auth.api.composedb.executeQuery(CREATE_FINE_TUNING, variables)
+            const res = await api.composedb.executeQuery(CREATE_FINE_TUNING, variables)
 
             if (res.data) {
-                console.log(`Result=${res.data}`)
+                console.log(`Result=${JSON.stringify(res.data)}`)
                 const result = res.data as Result
 
                 if(result.createFineTuning) {

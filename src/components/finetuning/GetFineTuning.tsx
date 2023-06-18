@@ -1,5 +1,5 @@
 import {useContext, useEffect, useState} from "react";
-import {AuthContext} from "@/features/auth";
+import {Api, AuthContext} from "@/features/auth";
 import {Version} from "@/utils";
 import {FineTuning} from "@/components/finetuning/index";
 
@@ -15,23 +15,29 @@ const GET_FINE_TUNING = `
             patch
           }
           description
+          link
         }
       }
     }
 `
 
+export async function getFineTuning(api: Api, id: string): Promise<FineTuning> {
+    const res = await api.composedb.executeQuery(GET_FINE_TUNING, { id: id})
+    const data = res?.data ?? {}
+    return data as FineTuning
+}
+
 export default function GetFineTuning({id}: {id: string}) {
-    const auth = useContext(AuthContext)
+    const { api } = useContext(AuthContext)
     const [fineTuning, setFineTuning] = useState<FineTuning | null>(null)
 
-    const getFineTuning = async () => {
-        const res = await auth.auth.api.composedb.executeQuery(GET_FINE_TUNING, { id: id})
-        const data = res?.data ?? {}
-        setFineTuning(data as FineTuning)
+    const getFineTuningEffect = async () => {
+        const data = await getFineTuning(api, id)
+        setFineTuning(data)
     }
 
     useEffect(() => {
-        getFineTuning()
+        getFineTuningEffect()
     })
 
     if (fineTuning) {

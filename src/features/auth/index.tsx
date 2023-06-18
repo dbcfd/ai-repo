@@ -36,7 +36,8 @@ type LoginFn = () => Promise<void>
 type LogoutFn = () => Promise<void>
 
 type AuthenticationMemo = {
-    auth: AuthenticatedSession
+    api: Api
+    user?: UserInfo
     loading: boolean
     login: LoginFn
     logout: LogoutFn
@@ -80,6 +81,7 @@ async function authenticateSession(api: Api): Promise<UserInfo> {
     if (!didSession) {
         throw new Error('Missing didSession')
     }
+    console.log('Setting DID for composedb')
     api.composedb.setDID(didSession.did)
     localStorage.setItem(CERAMIC_AUTH, didSession.serialize());
 
@@ -114,7 +116,7 @@ async function authenticateSession(api: Api): Promise<UserInfo> {
     }
 }
 
-function defaultAuthenticatedSession(): AuthenticatedSession {
+function defaultApi(): Api {
     const url = process.env.NEXT_PUBLIC_CERAMIC_URL
     if (!url) {
         throw Error('Missing ceramic URL configuration')
@@ -138,42 +140,40 @@ function defaultAuthenticatedSession(): AuthenticatedSession {
     }
 
     return {
-        api: {
-            ceramic,
-            composedb,
-            db,
-            openAIKey
-        },
+        ceramic,
+        composedb,
+        db,
+        openAIKey
     }
 }
 
 export const AuthContext = createContext<AuthenticationMemo>({
     loading: true,
-    auth: defaultAuthenticatedSession(),
+    api: defaultApi(),
     login: async () => { },
     logout: async () => { },
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [auth, setAuth] = useState<AuthenticatedSession>(defaultAuthenticatedSession)
+    const api = defaultApi()
+
+    const [user, setUser] = useState<UserInfo | undefined>(undefined)
     const [loading, setLoading] = useState(false)
 
     const login = useCallback(async () => {
-        if(!auth.user && !loading) {
+        if(!user && !loading) {
             console.log('Authenticating')
             setLoading(true)
-            const userInfo = await authenticateSession(auth.api)
-            auth.user = userInfo
-            setAuth(auth)
+            const userInfo = await authenticateSession(api)
+            setUser(userInfo)
             console.log('Authentication complete')
         }
-    }, [auth, loading])
+    }, [api, user, loading])
 
 
     const logout = useCallback(async () => {
         console.log('Logout')
-        auth.user = undefined
-        setAuth(auth)
+        setUser(undefined)
     }, [])
 
     useEffect(() => {
@@ -182,11 +182,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const value = useMemo(() => ({
-        auth,
+        api,
+        user,
         loading,
         login,
         logout,
-    }), [auth, loading, login, logout])
+    }), [api, user, loading, login, logout])
 
     return (
         <AuthContext.Provider value={value}>

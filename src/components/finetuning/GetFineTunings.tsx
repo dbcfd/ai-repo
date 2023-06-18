@@ -1,11 +1,9 @@
 "use client"
 
-import {ReactNode, useContext, useEffect, useState} from "react";
-import {QueryData, QueryEdge, Version} from "@/components";
-import AddAIModel from "@/components/model/AddAIModel";
+import {useContext, useEffect, useState} from "react";
 import {AuthContext} from "@/features/auth";
 import {FineTuning} from "@/components/finetuning/index";
-import { Link } from 'react-router-dom'
+import {QueryData, versionAsString} from "@/utils";
 
 const GET_FINE_TUNINGS = `
     query GetFineTunings {
@@ -40,11 +38,11 @@ type Result = {
 }
 
 export default function GetFineTunings() {
-    const { auth } = useContext(AuthContext)
+    const { api } = useContext(AuthContext)
     const [fineTunings, setFineTunings] = useState<Array<FineTuning>>([])
 
     const getFineTunings = async () => {
-        const result = await auth.api.composedb.executeQuery(GET_FINE_TUNINGS)
+        const result = await api.composedb.executeQuery(GET_FINE_TUNINGS)
         if(result.data) {
             const res = result.data as Result
             const ft = res.fineTuningIndex.edges.map((e) => e.node)
@@ -58,12 +56,15 @@ export default function GetFineTunings() {
         if(fineTunings.length == 0) {
             return <div className="flex justify-between items-center w-full">No FineTunings</div>
         }
-        return <div className="flex justify-between items-center w-full">
+        return <div>
             {fineTunings.map((ft) => {
-                return (<div key={ft.id}>
-                <div key={ft.id+'_name'}>{ft.name}</div>
-                <div key={ft.id+'_desc'}>{ft.description}</div>
-                </div>)
+                return (<>
+                    <div key={ft.id}>
+                        {ft.name}@{versionAsString(ft.version)} [{ft.link}] - {ft.description}
+                    </div>
+                    <br/>
+                    </>
+                )
             })}
         </div>
     }

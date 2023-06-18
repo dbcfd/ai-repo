@@ -1,4 +1,4 @@
-import {Version} from "@/components";
+import {Version} from "@/utils";
 
 export * from './FineTuningList'
 

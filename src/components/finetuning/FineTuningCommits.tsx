@@ -10,35 +10,35 @@ import { FineTuning } from './FineTuning';
 import GetFineTunings from "@/components/finetuning/GetFineTunings";
 
 export function FineTuningCommits({link}:{link?: string}) {
-    const [commits, setCommits] = useState<CollectionRecordResponse<FineTuningCommits, FineTuningCommits>[] | null>(null)
+    const [commits, setCommits] = useState<Array<FineTuningCommits>>([])
     // const { account } = useParams()
-    const { auth, } = React.useContext(AuthContext)
+    const { api, user } = React.useContext(AuthContext)
 
     React.useEffect(() => {
         async function getFineTuningCommits() {
-            if (auth.user && link) {
-                const col = auth.api.db.collection<FineTuningCommits>(Collections.FineTuningCommits)
+            if (user && link) {
+                const col = api.db.collection<FineTuningCommits>(Collections.FineTuningCommits)
                 const commits = await col
-                    .where('owner', '==', auth.user.polybaseUser)
+                    .where('owner', '==', user.polybaseUser)
                     .where('link', '==', link)
                     .get().catch(() => null)
                 if (commits?.data && commits.data.length > 0) {
                     // put A before B if major version is greater
                     commits.data.sort((a, b) => b.data.version.major - a.data.version.major )
 
-                    setCommits(commits.data)
+                    setCommits(commits.data.map((c) => c.data))
                 }
             }
         }
         getFineTuningCommits().catch(console.error)
-    }, [auth, link]);
+    }, [api, user, link]);
 
     return (
         <>
             <div className='w-full h-full flex flex-col justify-between'>
                 <hr/>
-                {commits?.map(commit => {
-                    return <FineTuning key={commit.id} data={commit.data} />
+                {commits.map(commit => {
+                    return <FineTuning key={commit.id} data={commit} />
                 }) || 'No commits'}
             </div>
         </>

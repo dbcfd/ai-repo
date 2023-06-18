@@ -12,26 +12,29 @@ interface LoginProps {
 export function Login({}: LoginProps) {
   const [isPanelOpen, setPanelOpen] = React.useState(false)
   const [sidePanel, setSidePanel] = React.useState<HTMLElement | null>(null)
-  const { auth, login } = React.useContext(AuthContext)
+  const auth = React.useContext(AuthContext)
+  const user = auth.user
+  const api = auth.api
+  const login = auth.login
 
   const [windowWidth, setWindowWidth] = React.useState(1000);
   const [ethAddrAbbrv, setEthAddrAbbrv] = React.useState<string | null>(null);
   const [ensAddr, setEnsAddr] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const addr = auth.user?.ethereumAddress
+    const addr = user?.ethereumAddress
     if (addr) {
       setEthAddrAbbrv(truncateString(addr, 6))
     } else {
       setEthAddrAbbrv(null)
     }
-  }, [auth.user?.ethereumAddress]);
+  }, [user?.ethereumAddress]);
 
   React.useEffect(() => {
     async function getEnsAddress() {
-      if (auth.user) {
+      if (user) {
         try {
-          const addr = await auth.user.provider.lookupAddress(auth.user.ethereumAddress)
+          const addr = await user.provider.lookupAddress(user.ethereumAddress)
 
           if (addr) {
             setEnsAddr(addr)
@@ -45,7 +48,7 @@ export function Login({}: LoginProps) {
       }
     }
     getEnsAddress()
-  }, [auth.user]);
+  }, [user]);
 
   React.useEffect(() => {
     if (window) {
@@ -73,10 +76,10 @@ export function Login({}: LoginProps) {
     const { openAiKey } = Object.fromEntries(formData) as any
 
     if (ethAddrAbbrv) {
-      const col = auth.api.db.collection<User>('User')
-      const result = await col.record(auth.user!.ethereumAddress).get().catch(() => null)
-      const user = result?.data
-      if (user) {
+      const col = api.db.collection<User>('User')
+      const result = await col.record(user!.ethereumAddress).get().catch(() => null)
+      const existingUser = result?.data
+      if (existingUser) {
         // try {
         //   const res = await col
         //       .record(auth!.ethereumAddress)

@@ -1,8 +1,11 @@
 import {FormEvent, useContext, useState} from "react";
 import * as semver from 'semver'
 import {OpenAIContext} from "@/features/openai";
-import {Version} from "@/components";
 import {AuthContext} from "@/features/auth";
+
+const GET_FINE_TUNE = `
+
+`
 
 const CREATE_AI_MODEL = `
     mutation CreateAIModel($i: CreateAIModelInput!){
@@ -52,7 +55,7 @@ type Result = {
 
 export default function AddAIModel({finetuning}: {finetuning?: string}) {
     const [created, setCreated] = useState(<div/>)
-    const { auth } = useContext(AuthContext)
+    const { api } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
 
     if (!openAI) return <p>No OpenAI connection</p>
@@ -116,7 +119,7 @@ export default function AddAIModel({finetuning}: {finetuning?: string}) {
 
             const variables = { i: { content } }
 
-            const res = await auth.api.composedb.executeQuery(CREATE_AI_MODEL, variables)
+            const res = await api.composedb.executeQuery(CREATE_AI_MODEL, variables)
 
             if (res.data) {
                 console.log(`Result=${JSON.stringify(res.data)}`)

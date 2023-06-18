@@ -26,16 +26,16 @@ export const OpenAIContext = createContext<OpenAIMemo>({
 })
 
 export function OpenAI({children}: { children: ReactNode }) {
-    const auth = useContext(AuthContext).auth
+    const { api } = useContext(AuthContext)
 
     const value = useMemo(() => {
         // if (!auth || !auth.openAIKey) {
         //     return null
         // }
         return ({
-            api: connectOpenAI(auth.api.openAIKey)
+            api: connectOpenAI(api.openAIKey)
         })
-    }, [auth])
+    }, [api])
 
     function renderWithContext(value: OpenAIMemo | null) {
         if(!value) {

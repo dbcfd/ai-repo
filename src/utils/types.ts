@@ -16,6 +16,18 @@ export interface Version {
     build?: string
 }
 
+export function versionAsString(version: Version): string {
+    let preRelease = ''
+    if (version.preRelease) {
+        `-${version.preRelease}`
+    }
+    let build = ''
+    if (version.build) {
+        `+${version.build}`
+    }
+    return `${version.major}.${version.minor}.${version.patch}${preRelease}${build}`
+}
+
 export interface FineTuningCommits {
     id: string
     commitLog: string
@@ -36,4 +48,12 @@ export enum Collections {
     Version = 'Version',
     FineTuningCommits = 'FineTuningCommits',
     AIModelCommits = 'AIModelCommits',
+}
+
+export type QueryEdge<T> = {
+    node: T
+}
+
+export type QueryData<T> = {
+    edges: Array<QueryEdge<T>>
 }
