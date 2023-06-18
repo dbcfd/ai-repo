@@ -1,11 +1,11 @@
-import {ReactNode, useContext} from "react";
-import {ComposeDBContext} from "@/features/composedb";
-import { gql, useQuery } from '@apollo/client';
+import {ReactNode, useContext, useEffect, useState} from "react";
 import {QueryEdge, Version} from "@/components";
 import AddAIModel from "@/components/model/AddAIModel";
 import Link from 'next/link'
+import {AuthContext} from "@/features/auth";
+import {FineTuning} from "@/components/finetuning/index";
 
-const GET_FINE_TUNINGS = gql`
+const GET_FINE_TUNINGS = `
     query GetFineTunings {
         fineTuningIndex(first: 10) {
             edges {
@@ -33,48 +33,47 @@ const GET_FINE_TUNINGS = gql`
     }
 `
 
-type FineTune = {
-    prompt: string
-    completion: string
-}
-
-type FineTuning = {
-    id: string
-    name: string
-    version: Version
-    description: string
-    tags: Array<string>
-    tuning: Array<FineTune>
-    commitLog: string
-    link: string
+type Result = {
+    fineTuningIndex: {
+        edges: Array<QueryEdge<FineTuning>>
+    }
 }
 
 export type SelectHandler = (id: string) => void
 
 export default function GetFineTunings({onSelectCommit}: {onSelectCommit: SelectHandler}) {
-    const composeDB = useContext(ComposeDBContext)
+    const { auth } = useContext(AuthContext)
+    const [fineTunings, setFineTunings] = useState<Array<FineTuning>>([])
 
-    const { loading, error, data } = useQuery(GET_FINE_TUNINGS);
-
-    if (loading) return <p>'Submitting...'</p>;
-
-    if (error) return <p>`Submission error! ${error.message}`</p>;
+    const getFineTunings = async () => {
+        const result = await auth?.composedb.executeQuery(GET_FINE_TUNINGS)
+        console.log(result)
+        if (result && result.data) {
+            const res = result as Result
+            setFineTunings(res.fineTuningIndex.edges.map((e) => e.node))
+        }
+    }
 
     function displayFineTunings() {
-        if(data.fineTuningIndex.edges.length == 0) {
+        console.log(`ComposeDB return: ${fineTunings}`)
+        if(fineTunings.length == 0) {
             return <div>No FineTunings</div>
         }
         return <div>
-            {data.fineTuningIndex.edges.map((edge: QueryEdge<FineTuning>) => {
-                <>
-                <div>${edge.node.name}</div>
-                <div>${edge.node.description}</div>
-                <div onClick={() => onSelectCommit(edge.node.link)}>Commits</div>
+            {fineTunings.map((edge) => {
+                return (<>
+                <div>${edge.name}</div>
+                <div>${edge.description}</div>
+                <div onClick={() => onSelectCommit(edge.link)}>Commits</div>
                 <Link href='../model/AddAiModel'>Train</Link>
-                </>
+                </>)
             })}
         </div>
     }
+
+    useEffect(() => {
+        getFineTunings()
+    })
 
     return displayFineTunings()
 }

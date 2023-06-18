@@ -1,8 +1,9 @@
-import {useContext} from "react";
-import {ComposeDBContext} from "@/features/composedb";
-import { gql, useQuery } from '@apollo/client';
+import {useContext, useEffect, useState} from "react";
+import {AuthContext} from "@/features/auth";
+import {Version} from "@/utils";
+import {FineTuning} from "@/components/finetuning/index";
 
-const GET_FINE_TUNING = gql`
+const GET_FINE_TUNING = `
     query GetFineTuning($id:ID!) {
       node(id: $id) {
         ... on FineTuning {
@@ -20,19 +21,26 @@ const GET_FINE_TUNING = gql`
 `
 
 export default function GetFineTuning({id}: {id: string}) {
-    const composeDB = useContext(ComposeDBContext)
+    const auth = useContext(AuthContext)
+    const [fineTuning, setFineTuning] = useState<FineTuning | null>(null)
 
-    const { loading, error, data } = useQuery(GET_FINE_TUNING, {
-        variables: { id: id }
-    });
+    const getFineTuning = async () => {
+        const res = await auth.auth?.composedb.executeQuery(GET_FINE_TUNING, { id: id})
+        const data = res?.data ?? {}
+        setFineTuning(data as FineTuning)
+    }
 
-    if (loading) return 'Submitting...';
+    useEffect(() => {
+        getFineTuning()
+    })
 
-    if (error) return `Submission error! ${error.message}`;
-
-    return (
-        <div>
-            ${data.description}
-        </div>
-    )
+    if (fineTuning) {
+        return (
+            <div>
+                {fineTuning.description}
+            </div>
+        )
+    } else {
+        return <div>No fine tuning found</div>
+    }
 }

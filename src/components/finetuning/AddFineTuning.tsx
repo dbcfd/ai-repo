@@ -1,11 +1,9 @@
 import {ChangeEvent, FormEvent, useContext, useState} from "react";
-import {ComposeDBContext} from "@/features/composedb";
-import {gql, useMutation} from '@apollo/client';
 import * as semver from 'semver'
 import {OpenAIContext} from "@/features/openai";
-import {once} from "events";
+import {AuthContext} from "@/features/auth";
 
-const CREATE_FINE_TUNING = gql`
+const CREATE_FINE_TUNING = `
     mutation CreateFineTuning($i: CreateFineTuningInput!){
         createFineTuning(input: $i){
             document {
@@ -19,6 +17,7 @@ const CREATE_FINE_TUNING = gql`
 {
   "i": {
     "content": {
+      "creator": "account did",
       "version": {
         "major": 1,
         "minor": 0,
@@ -41,20 +40,12 @@ type FineTuning = {
 
 export default function AddFineTuning() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const composeDB = useContext(ComposeDBContext)
-    if (!composeDB) {
-        throw new Error('ComposeDB not initialized')
-    }
+    const { auth } = useContext(AuthContext)
     const openAI = useContext(OpenAIContext)
+
     if (!openAI) {
-        throw new Error('OpenAI not initialized')
+        return <p>Provide OpenAI API Key</p>
     }
-
-    const [addFineTuning, { data, loading, error }] = useMutation(CREATE_FINE_TUNING);
-
-    if (loading) return <p>'Submitting...'</p>;
-
-    if (error) return <p>`Submission error! ${error.message}`</p>;
 
     const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0)
@@ -98,18 +89,18 @@ export default function AddFineTuning() {
 
             // Get data from the form.
             const input = {
+                creator: auth?.didSession.did,
                 name,
                 version,
                 tags,
                 description,
-                creator: composeDB.did,
                 link: createFineTuneResponse.data.id,
                 commitLog: 'blah',
             }
 
-            addFineTuning({variables: input})
+            const res = await auth?.composedb.executeQuery(CREATE_FINE_TUNING, input)
 
-            const id = data.document.id
+            const id = res?.data?.id
         }
 
         doSubmit().catch(console.log)
